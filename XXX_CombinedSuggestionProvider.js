@@ -8,14 +8,21 @@ var XXX_CombinedSuggestionProvider = function ()
 	
 	this.elements.steps = [];
 	
+	this.maximumResults = 5;
+	
 	this.steps = 0;
 	
-	this.step = 0;
+	this.currentStep = 0;
 	
 	this.expectedResponsesForThisStep = 0;
 	this.receivedResponsesForThisStep = 0;
 	
 	this.suggestionOptionsQueue = [];
+};
+
+XXX_CombinedSuggestionProvider.prototype.setMaximumResults = function (maximumResults)
+{
+	this.maximumResults = XXX_Default.toPositiveInteger(maximumResults, 5);
 };
 
 XXX_CombinedSuggestionProvider.prototype.requestSuggestions = function (valueAskingSuggestions, completedCallback, failedCallback)
@@ -24,7 +31,7 @@ XXX_CombinedSuggestionProvider.prototype.requestSuggestions = function (valueAsk
 	this.completedCallback = completedCallback;
 	this.failedCallback = failedCallback;
 	
-	this.step = 0;
+	this.currentStep = 0;
 	this.suggestionOptionsQueue = [];
 	
 	this.tryNextStep();
@@ -32,55 +39,70 @@ XXX_CombinedSuggestionProvider.prototype.requestSuggestions = function (valueAsk
 
 XXX_CombinedSuggestionProvider.prototype.tryNextStep = function ()
 {
-	XXX_JS.errorNotification(1, 'Trying step ' + this.step);
+	//XXX_JS.errorNotification(1, 'Trying step ' + this.currentStep);
 	
-	if (XXX_Array.getFirstLevelItemTotal(this.suggestionOptionsQueue) == 0)
-	{	
-		var subSuggestionProvidersForStep = this.elements.steps[this.step];
-		
-		++this.step;
-		
-		this.expectedResponsesForThisStep = XXX_Array.getFirstLevelItemTotal(subSuggestionProvidersForStep);
-		this.receivedResponsesForThisStep = 0;
-		
-		var XXX_CombinedSuggestionProvider_instance = this;
-		
-		for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(subSuggestionProvidersForStep); i < iEnd; ++i)
+	if (XXX_Array.getFirstLevelItemTotal(this.suggestionOptionsQueue) < this.maximumResults)
+	{
+		if (this.currentStep < this.steps)
 		{
-			var subSuggestionProviderFailedCallback = function ()
-			{
-				XXX_CombinedSuggestionProvider_instance.failedResponseHandler();
-			};
+			var subSuggestionProvidersForStep = this.elements.steps[this.currentStep];
 			
-			var subSuggestionProviderCompletedCallback = function (valueAskingSuggestions, suggestionOptions)
-			{
-				XXX_CombinedSuggestionProvider_instance.completedResponseHandler(valueAskingSuggestions, suggestionOptions);
-			};
+			this.expectedResponsesForThisStep = XXX_Array.getFirstLevelItemTotal(subSuggestionProvidersForStep);
+			this.receivedResponsesForThisStep = 0;
 			
-			subSuggestionProvidersForStep[i].requestSuggestions(this.valueAskingSuggestions, subSuggestionProviderCompletedCallback, subSuggestionProviderFailedCallback);
-		}
-			
-		
-		if (this.step == this.steps)
-		{
-			if (this.completedCallback)
+			if (this.expectedResponsesForThisStep)
 			{
-				this.completedCallback(this.valueAskingSuggestions, this.suggestionOptionsQueue);
+				var XXX_CombinedSuggestionProvider_instance = this;
+				
+				for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(subSuggestionProvidersForStep); i < iEnd; ++i)
+				{
+					var subSuggestionProviderFailedCallback = function ()
+					{
+						XXX_CombinedSuggestionProvider_instance.failedResponseHandler();
+					};
+					
+					var subSuggestionProviderCompletedCallback = function (valueAskingSuggestions, suggestionOptions)
+					{
+						XXX_CombinedSuggestionProvider_instance.completedResponseHandler(valueAskingSuggestions, suggestionOptions);
+					};
+					
+					subSuggestionProvidersForStep[i].requestSuggestions(this.valueAskingSuggestions, subSuggestionProviderCompletedCallback, subSuggestionProviderFailedCallback);
+				}
 			}
+			
+			++this.currentStep;
+			
+			if (this.expectedResponsesForThisStep == 0)
+			{
+				this.tryNextStep();
+			}
+		}
+		else
+		{
+			this.triggerCompletedCallback();
 		}
 	}
 	else
 	{
-		if (this.completedCallback)
-		{
-			this.completedCallback(this.valueAskingSuggestions, this.suggestionOptionsQueue);
-		}
+		this.triggerCompletedCallback();
+	}
+};
+
+XXX_CombinedSuggestionProvider.prototype.triggerCompletedCallback = function ()
+{
+	if (this.completedCallback)
+	{
+		var suggestionOptionsQueue = this.suggestionOptionsQueue;
+		
+		suggestionOptionsQueue = XXX_Array.getPart(suggestionOptionsQueue, 0, this.maximumResults);
+		
+		this.completedCallback(this.valueAskingSuggestions, suggestionOptionsQueue);
 	}
 };
 
 XXX_CombinedSuggestionProvider.prototype.failedResponseHandler = function ()
 {
-	//XXX_JS.errorNotification(1, 'Received step ' + this.step + ' failed response');
+	//XXX_JS.errorNotification(1, 'Received step ' + this.currentStep + ' failed response');
 	
 	++this.receivedResponsesForThisStep;
 	
@@ -92,9 +114,9 @@ XXX_CombinedSuggestionProvider.prototype.failedResponseHandler = function ()
 
 XXX_CombinedSuggestionProvider.prototype.completedResponseHandler = function (valueAskingSuggestions, suggestionOptions)
 {
-	//XXX_JS.errorNotification(1, 'Received step ' + this.step + ' completed response');
+	//XXX_JS.errorNotification(1, 'Received step ' + this.currentStep + ' completed response');
 	
-	XXX.debug.blaap43 = suggestionOptions;
+	//XXX.debug.blaap43 = suggestionOptions;
 	
 	++this.receivedResponsesForThisStep;
 	

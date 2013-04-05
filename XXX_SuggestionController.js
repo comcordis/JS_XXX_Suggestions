@@ -63,7 +63,7 @@ var XXX_SuggestionController = function (input, suggestionProvider)
 	this.ID = XXX.createID();
 	
 	this.minimumLineCharacterLength = 8;
-	this.maximumLineCharacterLength = 96;
+	this.maximumLineCharacterLength = 56;
 	
 	this.valueAskingSuggestions = '';
 	this.filteredValueAskingSuggestions = '';

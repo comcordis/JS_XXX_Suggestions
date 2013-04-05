@@ -154,6 +154,8 @@ XXX_SuggestionOptionSelection.prototype.resetSuggestionOptions = function ()
 
 XXX_SuggestionOptionSelection.prototype.addSuggestionOptions = function (suggestionOptions)
 {
+	suggestionOptions = XXX_SuggestionProviderHelpers.sortSuggestions(suggestionOptions);
+		
 	for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(suggestionOptions); i < iEnd; ++i)
 	{
 		var suggestionOption = suggestionOptions[i];
@@ -218,7 +220,7 @@ XXX_SuggestionOptionSelection.prototype.rerender = function ()
 		
 		this.IDToSuggestionOptionConversion[ID] = suggestionOption;
 		
-		tempSuggestionOptions += '<div id="' + ID + '" class="suggestionOption" style="' + (i == this.selectedIndex ? ' background-color: #DDDDDD;' : '') + '">';
+		tempSuggestionOptions += '<div id="' + ID + '" class="' + (i == this.selectedIndex ? 'suggestionOptionSelected' : 'suggestionOption') + '">';
 		tempSuggestionOptions += suggestionOption.label;
 		tempSuggestionOptions += '</div>';
 	}

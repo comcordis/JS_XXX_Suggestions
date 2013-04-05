@@ -23,20 +23,14 @@ var XXX_SuggestionProvider = function ()
 	this.requestSuggestionsCallback = false;
 	this.cancelRequestSuggestionsCallback = false;
 	
-	this.maximumClientSide = 5;
-	this.maximumServerSide = 15;
+	this.maximumResults = 5;
 	
 	this.composeSuggestionOptionLabelCallback = false;
 };
 
-XXX_SuggestionProvider.prototype.setMaximumClientSide = function (maximumClientSide)
+XXX_SuggestionProvider.prototype.setMaximumResults = function (maximumResults)
 {
-	this.maximumClientSide = XXX_Default.toPositiveInteger(maximumClientSide, 5);
-};
-
-XXX_SuggestionProvider.prototype.setMaximumServerSide = function (maximumServerSide)
-{
-	this.maximumServerSide = XXX_Default.toPositiveInteger(maximumServerSide, 15);	
+	this.maximumResults = XXX_Default.toPositiveInteger(maximumResults, 5);
 };
 
 XXX_SuggestionProvider.prototype.setComposeSuggestionOptionLabelCallback = function (composeSuggestionOptionLabelCallback)
@@ -142,12 +136,16 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 			var cachedSuggestion = this.cachedSuggestions[i];
 			
 			var suggestedValue = cachedSuggestion.suggestedValue;
-			var suggestedValueLowerCase = XXX_String.convertToLowerCase(suggestedValue);
 			
-			if (XXX_String.findFirstPosition(suggestedValueLowerCase, valueAskingSuggestionsLowerCase) === 0)
+			var matchedSuggestion = XXX_SuggestionProviderHelpers.tryMatchingSuggestion(valueAskingSuggestions, suggestedValue);
+			
+			if (matchedSuggestion)
 			{
 				cachedSuggestion.valueAskingSuggestions = valueAskingSuggestions;
-				cachedSuggestion.complement = XXX_String.getPart(suggestedValue, XXX_String.getCharacterLength(valueAskingSuggestions));
+				cachedSuggestion.matchType = matchedSuggestion.matchType;
+				cachedSuggestion.suggestedValue = matchedSuggestion.suggestedValue;
+				cachedSuggestion.complement = matchedSuggestion.complement;
+				cachedSuggestion.label = matchedSuggestion.label;
 				
 				if (this.composeSuggestionOptionLabelCallback)
 				{
@@ -162,7 +160,7 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 			}
 		}
 		
-		if (XXX_Array.getFirstLevelItemTotal(cachedSuggestions) >= this.maximumClientSide)
+		if (XXX_Array.getFirstLevelItemTotal(cachedSuggestions) >= this.maximumResults)
 		{
 			retrievalMethod = 'cache';
 		}
@@ -179,7 +177,7 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 	switch (retrievalMethod)
 	{
 		case 'cache':			
-			var limitedSuggestions = XXX_SuggestionProviderHelpers.limitToMaximum(cachedSuggestions, this.maximumClientSide);
+			var limitedSuggestions = XXX_Array.getPart(cachedSuggestions, 0, this.maximumResults);
 			
 			if (this.completedCallback)
 			{
@@ -202,7 +200,7 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 			switch (this.suggestionSource)
 			{
 				case 'serverSideRoute':
-					XXX_HTTP_Browser_Request_Asynchronous.queueRequest(this.ID + '_requestSuggestions', XXX_URI.composeRouteURI(this.serverSideRoute), [{key: 'valueAskingSuggestions', value: valueAskingSuggestionsLowerCase}, {key: 'maximum', value: this.maximumServerSide}], completedCallback, 'json', false, 'body', false, failedCallback);
+					XXX_HTTP_Browser_Request_Asynchronous.queueRequest(this.ID + '_requestSuggestions', XXX_URI.composeRouteURI(this.serverSideRoute), [{key: 'valueAskingSuggestions', value: valueAskingSuggestionsLowerCase}, {key: 'maximum', value: this.maximumResults}], completedCallback, 'json', false, 'body', false, failedCallback);
 					break;
 				case 'callback':
 					this.requestSuggestionsCallback(valueAskingSuggestions, completedCallback, failedCallback);
@@ -247,7 +245,7 @@ XXX_SuggestionProvider.prototype.completedResponseHandler = function (suggestion
 				}
 				break;
 			case 'raw':
-				this.processedSuggestions = XXX_SuggestionProviderHelpers.processRawSuggestions(this.valueAskingSuggestions, suggestionsResponse.suggestions, this.maximumClientSide, this.fixedSuggestionsDataType);		
+				this.processedSuggestions = XXX_SuggestionProviderHelpers.processRawSuggestions(this.valueAskingSuggestions, suggestionsResponse.suggestions, this.maximumResults, this.fixedSuggestionsDataType);		
 				break;
 		}
 		
@@ -289,7 +287,7 @@ XXX_SuggestionProvider.prototype.completedResponseHandler = function (suggestion
 			}
 		}
 		
-		var limitedSuggestions = XXX_SuggestionProviderHelpers.limitToMaximum(this.processedSuggestions, this.maximumClientSide);
+		var limitedSuggestions = XXX_Array.getPart(this.processedSuggestions, 0, this.maximumResults);
 		
 		if (this.completedCallback)
 		{
