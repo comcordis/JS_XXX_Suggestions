@@ -33,22 +33,6 @@ var XXX_SuggestionProviderHelpers =
 		
 	*/
 	
-	splitToParts: function (sentence)
-	{
-		sentence = XXX_Type.makeString(sentence);
-		
-		var parts = XXX_String_Pattern.splitToArray(sentence, '\\s*(?:,|\\(|\\)|\\s)\\s*', '');
-		
-		parts.sort(function(a, b)
-		{
-			return XXX_String.getCharacterLength(a) - XXX_String.getCharacterLength(b);
-		});
-				
-		parts = XXX_Array.filterOutEmpty(parts);
-		
-		return parts;
-	},
-	
 	determineMaximumLevenshteinDistance: function (valueCharacterLength)
 	{
 		var result = 3;
@@ -115,6 +99,200 @@ var XXX_SuggestionProviderHelpers =
 		});
 		
 		return suggestions;
+	},
+	
+	
+	
+	/*
+	
+	Features:
+		- Unicode / UTF-8 compatible
+		- Case sensitivity or not
+		- E accent to e etc. 
+		- Entropy
+		- Levenshtein distance as a percentage
+			percentage = (1 - levenshteinDistance / longestWordCharacterLength) × 100
+			
+			- Ignore results where the percentage match is less than 50%.
+    		- Treat the percentages as ordinary numbers, and sum them to create a "total match" between the search terms and document.
+    			- E.g. 2 words of 80% result in 160, which is a better match than 1 word of 100%
+    	- Term frequency
+    	- Term hit ratio
+    	- Character hit ratio
+    	- Mark characters as matching individually
+    		- Have a wrapping functions which wraps all those characters.
+    	- Have a html tag aware highlighting wrapping function
+    	- Single or Multiple words
+    	- AND, OR etc.
+    				
+			matchTypes:
+				- exact b
+				- otherCase b + i
+				- levenshtein i
+			
+			b = exact positions
+			i = similar (levenshtein)
+			u = exact different positions
+			
+			splitToTerms
+				- term
+				- separator
+				
+			Positions for terms			
+				Levenshtein
+				
+				
+				Levenshtein multiple terms:
+					- character hit percentage, longest characterLength - distance
+				
+			
+				
+			Cachable parts:
+			Live parts:
+			
+				
+				
+			result presentation:
+				sourceCase (Default)
+				queryCase
+			
+			comparison:
+				- exact
+				- case insensitive (lower case) (Default)
+				- normal characters (without accents)
+			
+			highlighting problems:
+				- matching (character switches) and result presentation difference
+				- if special character is formed back to multiple base characters
+					Dußeldorf -> Dusseldorf 
+					
+					Duß has to highlight Duss as <b></b> and reversed
+				
+					Have a switchboard for from>to
+						If ss -> ß, there should be a mapping for both s'es back to the single character
+						
+						source (Dußeldorf)
+						comparisonSource (dusseldorf)
+						
+					Loop torugh each character
+						- have an original switchboard
+						- have a normalized switchboard
+							- original character index
+							- normalized characters
+						
+						get position of match
+							
+							loop from there for the original start, to original end
+							
+					
+			term modes:
+				- full
+				- split to terms
+				
+			
+			pre-processing:		
+				source:
+					- full
+					- split to terms
+				query:
+					- full
+					- split to terms
+	*/
+	
+	getSourceSwitchBoard: function (source)
+	{		
+		var characterLength = XXX_String.getCharacterLength(source);
+		
+		var result =
+		{
+			source: source,
+			sourceLowerCase: XXX_String.convertToLowerCase(source),
+			characterLength: characterLength,
+			characterSwitches: [],
+			characterHitPercentage: 0,
+			characterHitPercentageStep: 100 / characterLength,
+			termHits: 0
+		};
+		
+		if (characterLength > 0)
+		{
+			for (var i = 0, iEnd = characterLength; i < iEnd; ++i)
+			{
+				result.characterSwitches.push({character: XXX_String.getPart(source, i, 1), characterSwitch: false});
+			}
+		}
+		
+		return result;
+	},
+	
+	updateSourceSwitchBoardForTerm: function (sourceSwitchBoard, term)
+	{
+		var searchOffset = 0;
+		var termLowerCase = XXX_String.convertToLowerCase(term);
+		var termCharacterLength = XXX_String.getCharacterLength(term);
+		
+		while (true)
+		{
+			var termPosition = XXX_String.findFirstPosition(sourceSwitchBoard.sourceLowerCase, termLowerCase, searchOffset);
+			
+			if (termPosition !== false)
+			{
+				for (var i = termPosition, iEnd = termPosition + termCharacterLength; i < iEnd; ++i)
+				{
+					if (!sourceSwitchBoard.characterSwitches[i].characterSwitch)
+					{
+						sourceSwitchBoard.characterSwitches[i].characterSwitch = true;
+						
+						sourceSwitchBoard.characterHitPercentage += sourceSwitchBoard.characterHitPercentageStep;
+					}
+				}
+				
+				searchOffset += termPosition + termCharacterLength;
+				
+				sourceSwitchBoard.termHits += 1;
+			}
+			else
+			{
+				break;
+			}
+		}
+		
+		return sourceSwitchBoard;
+	},
+	
+	composeLabelFromSourceSwitchBoard: function (sourceSwitchBoard, wrapTag)
+	{
+		var result = '';
+		
+		var isWrapped = false;
+		
+		for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(sourceSwitchBoard.characterSwitches); i < iEnd; ++i)
+		{
+			var characterSwitch = sourceSwitchBoard.characterSwitches[i];
+			
+			if (characterSwitch.characterSwitch)
+			{
+				if (!isWrapped)
+				{
+					result += '<' + wrapTag + '>';
+					
+					isWrapped = true;
+				}
+			}
+			else
+			{
+				if (isWrapped)
+				{
+					result += '</' + wrapTag + '>';
+					
+					isWrapped = false;
+				}
+			}
+			
+			result += characterSwitch.character;
+		}
+		
+		return result;
 	},
 	
 	tryMatchingSuggestion: function (valueAskingSuggestions, rawSuggestion)
@@ -185,7 +363,8 @@ var XXX_SuggestionProviderHelpers =
 		if (result === false)
 		{
 			var label = rawSuggestion;
-			var valueAskingSuggestionsLowerCaseParts = this.splitToParts(valueAskingSuggestionsLowerCase);
+			var valueAskingSuggestionsParts = XXX_String_Search.splitToTerms(valueAskingSuggestions);
+			var valueAskingSuggestionsLowerCaseParts = XXX_String_Search.splitToTerms(valueAskingSuggestionsLowerCase);
 			
 			XXX.debug.labels.push([label, valueAskingSuggestionsLowerCaseParts]);
 			
@@ -194,8 +373,14 @@ var XXX_SuggestionProviderHelpers =
 				var foundAllParts = true;
 				var foundAtLeastOnePart = false;
 				
+				var sourceSwitchBoard = this.getSourceSwitchBoard(label);
+				
 				for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(valueAskingSuggestionsLowerCaseParts); i < iEnd; ++i)
 				{
+					sourceSwitchBoard = this.updateSourceSwitchBoardForTerm(sourceSwitchBoard, valueAskingSuggestionsParts[i]);
+					
+					
+					
 					var valueAskingSuggestionsLowerCasePart = valueAskingSuggestionsLowerCaseParts[i];
 					
 					var valueAskingSuggestionsLowerCasePartPosition = XXX_String.findFirstPosition(XXX_String.convertToLowerCase(label), valueAskingSuggestionsLowerCasePart);
@@ -218,6 +403,9 @@ var XXX_SuggestionProviderHelpers =
 						foundAtLeastOnePart = true;
 					}
 				}
+							
+				label = this.composeLabelFromSourceSwitchBoard(sourceSwitchBoard, 'b');
+				
 				
 				if (foundAllParts)
 				{
@@ -248,6 +436,7 @@ var XXX_SuggestionProviderHelpers =
 		
 		var processedSuggestions = [];
 			XXX.debug.labels = [];
+			XXX.debug.characterSwitches = [];
 					
 		for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(rawSuggestions); i < iEnd; ++i)
 		{

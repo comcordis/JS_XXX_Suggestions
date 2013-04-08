@@ -1,3 +1,12 @@
+/*
+
+2 modes:
+	- max x results
+	- filter results, long list (dropdown like yat now)
+
+Default if empty, but focused, query (e.g. Italy for only italian results)
+
+*/
 
 var XXX_SuggestionProvider = function ()
 {
