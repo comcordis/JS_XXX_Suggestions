@@ -152,55 +152,12 @@ var XXX_SuggestionProviderHelpers =
 			
 				
 				
-			result presentation:
-				sourceCase (Default)
-				queryCase
 			
-			comparison:
-				- exact
-				- case insensitive (lower case) (Default)
-				- normal characters (without accents)
-			
-			highlighting problems:
-				- matching (character switches) and result presentation difference
-				- if special character is formed back to multiple base characters
-					Dußeldorf -> Dusseldorf 
-					
-					Duß has to highlight Duss as <b></b> and reversed
-				
-					Have a switchboard for from>to
-						If ss -> ß, there should be a mapping for both s'es back to the single character
-						
-						source (Dußeldorf)
-						comparisonSource (dusseldorf)
-						
-					Loop torugh each character
-						- have an original switchboard
-						- have a normalized switchboard
-							- original character index
-							- normalized characters
-						
-						get position of match
-							
-							loop from there for the original start, to original end
-							
-					
-			term modes:
-				- full
-				- split to terms
-				
-			
-			pre-processing:		
-				source:
-					- full
-					- split to terms
-				query:
-					- full
-					- split to terms
 	*/
 	
 	getSourceSwitchBoard: function (source)
-	{		
+	{
+		
 		var characterLength = XXX_String.getCharacterLength(source);
 		
 		var result =
