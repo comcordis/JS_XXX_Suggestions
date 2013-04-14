@@ -165,7 +165,7 @@ XXX_SuggestionController.prototype.updateLineCharacterLength = function ()
 		lineCharacterLength = this.maximumLineCharacterLength;
 	}
 	
-	XXX_DOM_NativeHelpers.nativeCharacterLineInput.setLineCharacterLength(this.elements.input, lineCharacterLength);
+	//XXX_DOM_NativeHelpers.nativeCharacterLineInput.setLineCharacterLength(this.elements.input, lineCharacterLength);
 };
 
 XXX_SuggestionController.prototype.getData = function ()
