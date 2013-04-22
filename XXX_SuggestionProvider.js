@@ -35,6 +35,8 @@ var XXX_SuggestionProvider = function ()
 	this.maximumResults = 5;
 	
 	this.composeSuggestionOptionLabelCallback = false;
+	
+	this.elements = {};
 };
 
 XXX_SuggestionProvider.prototype.setMaximumResults = function (maximumResults)
@@ -69,6 +71,12 @@ XXX_SuggestionProvider.prototype.setSuggestionSourceToCallback = function (reque
 	this.suggestionSource = 'callback';
 	this.requestSuggestionsCallback = requestSuggestionsCallback;
 	this.cancelRequestSuggestionsCallback = cancelRequestSuggestionsCallback;
+};
+
+XXX_SuggestionProvider.prototype.setSuggestionSourceToSimpleIndex = function (simpleIndex)
+{
+	this.suggestionSource = 'simpleIndex';
+	this.simpleIndex = simpleIndex;
 };
 
 XXX_SuggestionProvider.prototype.setSuggestionSourceToFixed = function (fixedSuggestionsDataType, fixedSuggestions)
@@ -214,6 +222,10 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 				case 'callback':
 					this.requestSuggestionsCallback(valueAskingSuggestions, completedCallback, failedCallback);
 					break;
+				case 'simpleIndex':
+					this.simpleIndex.executeQuery(valueAskingSuggestions);
+					this.completedResponseHandler(this.simpleIndex.getSuggestionProviderSourceResponse())
+					break;
 				case 'fixed':
 					this.completedResponseHandler(this.fixedSuggestions);
 					break;
@@ -254,7 +266,7 @@ XXX_SuggestionProvider.prototype.completedResponseHandler = function (suggestion
 				}
 				break;
 			case 'raw':
-				this.processedSuggestions = XXX_SuggestionProviderHelpers.processRawSuggestions(this.valueAskingSuggestions, suggestionsResponse.suggestions, this.maximumResults, this.fixedSuggestionsDataType);		
+				//this.processedSuggestions = XXX_SuggestionProviderHelpers.processRawSuggestions(this.valueAskingSuggestions, suggestionsResponse.suggestions, this.maximumResults, this.fixedSuggestionsDataType);		
 				break;
 		}
 		

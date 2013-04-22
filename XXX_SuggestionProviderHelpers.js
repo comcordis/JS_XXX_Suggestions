@@ -33,69 +33,13 @@ var XXX_SuggestionProviderHelpers =
 		
 	*/
 	
-	determineMaximumLevenshteinDistance: function (valueCharacterLength)
-	{
-		var result = 3;
-		
-		switch (valueCharacterLength)
-		{
-			case 0:
-				result = 0;
-				break;
-			case 1:
-				result = 0;
-				break;
-			case 2:
-				result = 1;
-				break;
-			case 3:
-				result = 1;
-				break;
-			case 4:
-				result = 1;
-				break;
-			case 5:
-				result = 2;
-				break;
-		}
-		
-		return result;
-	},
 	
-	matchTypeToNumber: function (matchType)
-	{
-		var result = 6;
-		
-		switch (matchType)
-		{
-			case 'beginsWithFullLiteral':
-				result = 1;
-				break;
-			case 'hasFullLiteral':
-				result = 2;
-				break;
-			case 'hasAllLiteralParts':
-				result = 3;
-				break;
-			case 'hasAtLeastOneLiteralPart':
-				result = 4;
-				break;
-			case 'beginsWithLevenshteinFullLiteral':
-				result = 5;
-				break;
-			default:
-				result = 6;
-				break;
-		}
-		
-		return result;
-	},
 	
 	sortSuggestions: function (suggestions)
 	{
 		suggestions.sort(function(a, b)
 		{
-			return XXX_SuggestionProviderHelpers.matchTypeToNumber(a.matchType) - XXX_SuggestionProviderHelpers.matchTypeToNumber(b.matchType);
+			return XXX_String_Search.compareMatchStatistics(a.matchStatistics, b.matchStatistics);
 		});
 		
 		return suggestions;
@@ -138,250 +82,41 @@ var XXX_SuggestionProviderHelpers =
 				- term
 				- separator
 				
-			Positions for terms			
+			Positions for terms
 				Levenshtein
-				
-				
+			
 				Levenshtein multiple terms:
 					- character hit percentage, longest characterLength - distance
-				
-			
-				
+							
 			Cachable parts:
 			Live parts:
 			
-				
-				
-			
 	*/
-	
-	getSourceSwitchBoard: function (source)
-	{
 		
-		var characterLength = XXX_String.getCharacterLength(source);
-		
-		var result =
-		{
-			source: source,
-			sourceLowerCase: XXX_String.convertToLowerCase(source),
-			characterLength: characterLength,
-			characterSwitches: [],
-			characterHitPercentage: 0,
-			characterHitPercentageStep: 100 / characterLength,
-			termHits: 0
-		};
-		
-		if (characterLength > 0)
-		{
-			for (var i = 0, iEnd = characterLength; i < iEnd; ++i)
-			{
-				result.characterSwitches.push({character: XXX_String.getPart(source, i, 1), characterSwitch: false});
-			}
-		}
-		
-		return result;
-	},
-	
-	updateSourceSwitchBoardForTerm: function (sourceSwitchBoard, term)
-	{
-		var searchOffset = 0;
-		var termLowerCase = XXX_String.convertToLowerCase(term);
-		var termCharacterLength = XXX_String.getCharacterLength(term);
-		
-		while (true)
-		{
-			var termPosition = XXX_String.findFirstPosition(sourceSwitchBoard.sourceLowerCase, termLowerCase, searchOffset);
-			
-			if (termPosition !== false)
-			{
-				for (var i = termPosition, iEnd = termPosition + termCharacterLength; i < iEnd; ++i)
-				{
-					if (!sourceSwitchBoard.characterSwitches[i].characterSwitch)
-					{
-						sourceSwitchBoard.characterSwitches[i].characterSwitch = true;
-						
-						sourceSwitchBoard.characterHitPercentage += sourceSwitchBoard.characterHitPercentageStep;
-					}
-				}
-				
-				searchOffset += termPosition + termCharacterLength;
-				
-				sourceSwitchBoard.termHits += 1;
-			}
-			else
-			{
-				break;
-			}
-		}
-		
-		return sourceSwitchBoard;
-	},
-	
-	composeLabelFromSourceSwitchBoard: function (sourceSwitchBoard, wrapTag)
-	{
-		var result = '';
-		
-		var isWrapped = false;
-		
-		for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(sourceSwitchBoard.characterSwitches); i < iEnd; ++i)
-		{
-			var characterSwitch = sourceSwitchBoard.characterSwitches[i];
-			
-			if (characterSwitch.characterSwitch)
-			{
-				if (!isWrapped)
-				{
-					result += '<' + wrapTag + '>';
-					
-					isWrapped = true;
-				}
-			}
-			else
-			{
-				if (isWrapped)
-				{
-					result += '</' + wrapTag + '>';
-					
-					isWrapped = false;
-				}
-			}
-			
-			result += characterSwitch.character;
-		}
-		
-		return result;
-	},
-	
-	tryMatchingSuggestion: function (valueAskingSuggestions, rawSuggestion)
+	tryMatchingSuggestion: function (source, querySearchMatcher)
 	{
 		var result = false;
 		
-		var valueAskingSuggestionsLowerCase = XXX_String.convertToLowerCase(valueAskingSuggestions);
-		var valueAskingSuggestionsCharacterLength = XXX_String.getCharacterLength(valueAskingSuggestions);
-		var rawSuggestionLowerCase = XXX_String.convertToLowerCase(rawSuggestion);
+		var sourceSearchMatcher = XXX_String_Search.getSearchMatcher(source);
 		
-		var rawSuggestionLowerCasePosition = XXX_String.findFirstPosition(rawSuggestionLowerCase, valueAskingSuggestionsLowerCase);
+		sourceSearchMatcher = XXX_String_Search.matchSourceSearchMatcherWithQuerySearchMatcher(sourceSearchMatcher, querySearchMatcher);
 		
-		if (result === false)
+		if (sourceSearchMatcher.matchStatistics.bestMatchType !== false)
 		{
-			if (rawSuggestionLowerCasePosition === 0)
-			{
-				result = {};
-				result.matchType = 'beginsWithFullLiteral';
-				result.suggestedValue = rawSuggestion;
-				result.complement = XXX_String.getPart(rawSuggestion, valueAskingSuggestionsCharacterLength);
-				
-				result.label = '<b>';
-				result.label += XXX_String.getPart(rawSuggestion, 0, valueAskingSuggestionsCharacterLength);
-				result.label += '</b>';
-				result.label += result.complement;
-			}
-		}
-		
-		if (result === false)
-		{
-			if (rawSuggestionLowerCasePosition > 0)
-			{
-				result = {};
-				result.matchType = 'hasFullLiteral';
-				result.suggestedValue = rawSuggestion;
-				result.complement = '';
-				
-				result.label = XXX_String.getPart(rawSuggestion, 0, rawSuggestionLowerCasePosition);
-				result.label += '<u>';
-				result.label += XXX_String.getPart(rawSuggestion, rawSuggestionLowerCasePosition, valueAskingSuggestionsCharacterLength);
-				result.label += '</u>';
-				result.label += XXX_String.getPart(rawSuggestion, rawSuggestionLowerCasePosition + valueAskingSuggestionsCharacterLength);
-			}
-		}
-		
-		if (result === false)
-		{
-			if (valueAskingSuggestionsCharacterLength > 2)
-			{
-				var rawSuggestionLowerCaseBegin = XXX_String.getPart(rawSuggestionLowerCase, 0, valueAskingSuggestionsCharacterLength);
-				var rawSuggestionLowerCaseBeginLevenshteinDistance = XXX_String_Levenshtein.getDistance(valueAskingSuggestionsLowerCase, rawSuggestionLowerCaseBegin);
-				
-				if (rawSuggestionLowerCaseBeginLevenshteinDistance <= this.determineMaximumLevenshteinDistance(valueAskingSuggestionsCharacterLength))
-				{
-					result = {};
-					result.matchType = 'beginsWithLevenshteinFullLiteral';
-					result.suggestedValue = rawSuggestion;
-					result.complement = XXX_String.getPart(rawSuggestion, valueAskingSuggestionsCharacterLength);
-					
-					result.label = '<i>~ ';
-					result.label += '' + XXX_String.getPart(rawSuggestion, 0, valueAskingSuggestionsCharacterLength) + '';
-					result.label += result.complement;
-					result.label += '</i>';
-				}
-			}
-		}
-		
-		if (result === false)
-		{
-			var label = rawSuggestion;
-			var valueAskingSuggestionsParts = XXX_String_Search.splitToTerms(valueAskingSuggestions);
-			var valueAskingSuggestionsLowerCaseParts = XXX_String_Search.splitToTerms(valueAskingSuggestionsLowerCase);
+			result = {};
+			result.suggestedValue = sourceSearchMatcher.full.rawValue;
+			result.complement = '';
+			result.label = '';
 			
-			XXX.debug.labels.push([label, valueAskingSuggestionsLowerCaseParts]);
-			
-			if (XXX_Array.getFirstLevelItemTotal(valueAskingSuggestionsLowerCaseParts) > 1)
-			{
-				var foundAllParts = true;
-				var foundAtLeastOnePart = false;
-				
-				var sourceSwitchBoard = this.getSourceSwitchBoard(label);
-				
-				for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(valueAskingSuggestionsLowerCaseParts); i < iEnd; ++i)
-				{
-					sourceSwitchBoard = this.updateSourceSwitchBoardForTerm(sourceSwitchBoard, valueAskingSuggestionsParts[i]);
-					
-					
-					
-					var valueAskingSuggestionsLowerCasePart = valueAskingSuggestionsLowerCaseParts[i];
-					
-					var valueAskingSuggestionsLowerCasePartPosition = XXX_String.findFirstPosition(XXX_String.convertToLowerCase(label), valueAskingSuggestionsLowerCasePart);
-					var valueAskingSuggestionsLowerCasePartCharacterLength = XXX_String.getCharacterLength(valueAskingSuggestionsLowerCasePart);
-					
-					if (valueAskingSuggestionsLowerCasePartPosition === false)
-					{
-						foundAllParts = false;
-					}
-					else
-					{
-						var tempLabel = XXX_String.getPart(label, 0, valueAskingSuggestionsLowerCasePartPosition);
-						tempLabel += '<u>';
-						tempLabel += XXX_String.getPart(label, valueAskingSuggestionsLowerCasePartPosition, valueAskingSuggestionsLowerCasePartCharacterLength);
-						tempLabel += '</u>';
-						tempLabel += XXX_String.getPart(label, valueAskingSuggestionsLowerCasePartPosition + valueAskingSuggestionsLowerCasePartCharacterLength);
-						
-						label = tempLabel;
-						
-						foundAtLeastOnePart = true;
-					}
-				}
-							
-				label = this.composeLabelFromSourceSwitchBoard(sourceSwitchBoard, 'b');
-				
-				
-				if (foundAllParts)
-				{
-					result = {};
-					result.matchType = 'hasAllLiteralParts';
-					result.suggestedValue = rawSuggestion;
-					result.complement = '';
-					result.label = label;
-					
-				}
-				else if (foundAtLeastOnePart)
-				{
-					result = {};
-					result.matchType = 'hasAtLeastOneLiteralPart';
-					result.suggestedValue = rawSuggestion;
-					result.complement = '';
-					result.label = label;
-				}
-			}
+			result.label += sourceSearchMatcher.matchStatistics.termMode + '|';
+			result.label += sourceSearchMatcher.matchStatistics.bestMatchType + '|';
+			result.label += sourceSearchMatcher.matchStatistics.termHitTotal + '|';
+			result.label += sourceSearchMatcher.matchStatistics.identicalCharacterHitTotal + '|';
+			result.label += sourceSearchMatcher.matchStatistics.similarCharacterHitTotal + '|';
+			result.label += sourceSearchMatcher.matchStatistics.levenshteinDistanceTotal + '|';
+			result.label += sourceSearchMatcher.matchStatistics.offset + '|';
+			result.label += XXX_String_Search.composeLabelFromSourceSearchMatcher(sourceSearchMatcher);
+			result.matchStatistics = sourceSearchMatcher.matchStatistics;
 		}
 		
 		return result;
@@ -391,36 +126,38 @@ var XXX_SuggestionProviderHelpers =
 	{
 		maximum = XXX_Default.toPositiveInteger(maximum, 0);
 		
+		
+		
+		
+		var querySearchMatcher = XXX_String_Search.getSearchMatcher(valueAskingSuggestions, true);
+		
 		var processedSuggestions = [];
-			XXX.debug.labels = [];
-			XXX.debug.characterSwitches = [];
-					
+		
 		for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(rawSuggestions); i < iEnd; ++i)
 		{
 			var rawSuggestion = rawSuggestions[i];
 			
-			var processedSuggestion = {};
-			processedSuggestion.valueAskingSuggestions = valueAskingSuggestions;
-			processedSuggestion.suggestedValue = rawSuggestion;
-			processedSuggestion.complement = '';
-			processedSuggestion.label = '';
 			
-			processedSuggestion.data = {};
-			processedSuggestion.data[dataType] = processedSuggestion.suggestedValue;
-			processedSuggestion.data.dataType = dataType;
+			var matchedSuggestion = this.tryMatchingSuggestion(rawSuggestion, querySearchMatcher);
 			
-			var matchedSuggestion = this.tryMatchingSuggestion(valueAskingSuggestions, rawSuggestion);
-			
-			if (matchedSuggestion)
+			if (matchedSuggestion !== false)
 			{
-				processedSuggestion.matchType = matchedSuggestion.matchType;
+				var processedSuggestion = {};
+				processedSuggestion.valueAskingSuggestions = valueAskingSuggestions;
 				processedSuggestion.suggestedValue = matchedSuggestion.suggestedValue;
 				processedSuggestion.complement = matchedSuggestion.complement;
 				processedSuggestion.label = matchedSuggestion.label;
+				processedSuggestion.matchStatistics = matchedSuggestion.matchStatistics;
+				
+				processedSuggestion.data = {};
+				processedSuggestion.data[dataType] = processedSuggestion.suggestedValue;
+				processedSuggestion.data.dataType = dataType;
 				
 				processedSuggestions.push(processedSuggestion);
 			}
 		}
+		
+		XXX_JS.errorNotification(1, 'Hello');
 		
 		processedSuggestions = XXX_SuggestionProviderHelpers.sortSuggestions(processedSuggestions);	
 		

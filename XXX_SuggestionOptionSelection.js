@@ -154,7 +154,7 @@ XXX_SuggestionOptionSelection.prototype.resetSuggestionOptions = function ()
 
 XXX_SuggestionOptionSelection.prototype.addSuggestionOptions = function (suggestionOptions)
 {
-	suggestionOptions = XXX_SuggestionProviderHelpers.sortSuggestions(suggestionOptions);
+	//suggestionOptions = XXX_SuggestionProviderHelpers.sortSuggestions(suggestionOptions); // TODO
 		
 	for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(suggestionOptions); i < iEnd; ++i)
 	{

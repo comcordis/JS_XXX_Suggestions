@@ -65,6 +65,9 @@ var XXX_SuggestionController = function (input, suggestionProvider)
 	this.minimumLineCharacterLength = 8;
 	this.maximumLineCharacterLength = 56;
 	
+	this.requestSuggestionsDelay = 220;
+	this.requestSuggestionsDelayInstance = false;
+	
 	this.valueAskingSuggestions = '';
 	this.filteredValueAskingSuggestions = '';
 	this.previousCaretPosition = -1;
@@ -226,7 +229,7 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 			XXX_DOM_NativeHelpers.nativeSelectionHandling.setCaretPosition(this.elements.input, 0);
 		}
 		else
-		{			
+		{
 			this.elements.suggestionOptionSelection.selectPreviousSuggestionOption();
 			this.elements.suggestionOptionSelection.rerender();
 			
@@ -344,7 +347,16 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 		
 	if (requestSuggestions)
 	{
-		this.requestSuggestions();
+		this.cancelPreviousSuggestions();
+		
+		if (this.requestSuggestionsDelay > 0)
+		{
+			this.startRequestSuggestionsDelay();
+		}
+		else
+		{
+			this.requestSuggestions();
+		}
 	}
 	
 	this.previousCaretPosition = caretPosition;
@@ -364,7 +376,22 @@ XXX_SuggestionController.prototype.resetTypeAhead = function ()
 	XXX_DOM.setInner(this.elements.typeAhead, '');
 };
 
-XXX_SuggestionController.prototype.requestSuggestions = function ()
+XXX_SuggestionController.prototype.startRequestSuggestionsDelay = function ()
+{
+	if (this.requestSuggestionsDelayInstance)
+	{
+		XXX_Timer.cancelDelay(this.requestSuggestionsDelayInstance);
+	}
+	
+	var XXX_SuggestionController_instance = this;
+	
+	this.requestSuggestionsDelayInstance = XXX_Timer.startDelay(this.requestSuggestionsDelay, function ()
+	{
+		XXX_SuggestionController_instance.requestSuggestions();
+	});	
+};
+
+XXX_SuggestionController.prototype.cancelPreviousSuggestions = function ()
 {
 	var valueAskingSuggestions = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.input);
 	var valueAskingSuggestionsCharacterLength = XXX_String.getCharacterLength(valueAskingSuggestions);	
@@ -385,7 +412,13 @@ XXX_SuggestionController.prototype.requestSuggestions = function ()
 	{
 		this.valueAskingSuggestions = valueAskingSuggestions;
 		this.filteredValueAskingSuggestions = filteredValueAskingSuggestions;
-		
+	}
+};
+
+XXX_SuggestionController.prototype.requestSuggestions = function ()
+{
+	if (this.filteredValueAskingSuggestions != '')
+	{
 		var XXX_SuggestionController_instance = this;
 		
 		var completedCallback = function (valueAskingSuggestions, processedSuggestions)
@@ -398,7 +431,7 @@ XXX_SuggestionController.prototype.requestSuggestions = function ()
 			XXX_SuggestionController_instance.failedResponseHandler();
 		};
 		
-		this.elements.suggestionProvider.requestSuggestions(valueAskingSuggestions, completedCallback, failedCallback);
+		this.elements.suggestionProvider.requestSuggestions(this.valueAskingSuggestions, completedCallback, failedCallback);
 	}
 };
 
@@ -431,7 +464,7 @@ XXX_SuggestionController.prototype.completedResponseHandler = function (valueAsk
 		else
 		{
 			this.resetTypeAhead();
-		}		
+		}
 	}
 	else
 	{
