@@ -62,9 +62,6 @@ var XXX_SuggestionController = function (input, suggestionProvider)
 {
 	this.ID = XXX.createID();
 	
-	this.minimumLineCharacterLength = 8;
-	this.maximumLineCharacterLength = 56;
-	
 	this.requestSuggestionsDelay = 220;
 	this.requestSuggestionsDelayInstance = false;
 	
@@ -101,10 +98,6 @@ var XXX_SuggestionController = function (input, suggestionProvider)
 	
 	
 	
-	this.elements.typeAhead = XXX_DOM.createElementNode('div');
-	XXX_CSS.setClass(this.elements.typeAhead, 'suggestionController_typeAhead');
-	XXX_DOM.appendChildNode(this.elements.parent, this.elements.typeAhead);
-	
 	this.eventDispatcher = new XXX_EventDispatcher();
 	
 	XXX_CSS.setClass(this.elements.input, 'suggestionController_valueAskingSuggestions');
@@ -123,19 +116,8 @@ var XXX_SuggestionController = function (input, suggestionProvider)
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'keyUp', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.keyUpHandler(nativeEvent);
+	});
 		
-		XXX_SuggestionController_instance.updateLineCharacterLength();
-	});
-	
-	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'paste', function (nativeEvent)
-	{
-		XXX_SuggestionController_instance.updateLineCharacterLength();
-	});
-	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'cut', function (nativeEvent)
-	{
-		XXX_SuggestionController_instance.updateLineCharacterLength();
-	});
-	
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'blur', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.hide();
@@ -147,28 +129,6 @@ var XXX_SuggestionController = function (input, suggestionProvider)
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.rerender();
 	});
 	
-	this.updateLineCharacterLength();
-};
-
-XXX_SuggestionController.prototype.updateLineCharacterLength = function ()
-{
-	var value = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.input);
-	
-	var lineCharacterLength = XXX_String.getCharacterLength(value);	
-	lineCharacterLength *= 1.1;
-	lineCharacterLength = XXX_Number.ceil(lineCharacterLength);
-	
-	if (lineCharacterLength < this.minimumLineCharacterLength)
-	{
-		lineCharacterLength = this.minimumLineCharacterLength;
-	}
-	
-	if (lineCharacterLength > this.maximumLineCharacterLength)
-	{
-		lineCharacterLength = this.maximumLineCharacterLength;
-	}
-	
-	//XXX_DOM_NativeHelpers.nativeCharacterLineInput.setLineCharacterLength(this.elements.input, lineCharacterLength);
 };
 
 XXX_SuggestionController.prototype.getData = function ()
@@ -192,6 +152,9 @@ XXX_SuggestionController.prototype.propagateDataFromSelectedSuggestionOption = f
 	if (selectedSuggestionOption)
 	{
 		XXX_DOM_NativeHelpers.nativeCharacterLineInput.setValue(this.elements.hiddenInputData, XXX_String_JSON.encode(selectedSuggestionOption.data));
+		
+		this.setValue(selectedSuggestionOption.suggestedValue);		
+		XXX_DOM_NativeHelpers.nativeCharacterLineInput.focus(this.elements.input);
 	}
 	else
 	{
@@ -371,11 +334,6 @@ XXX_SuggestionController.prototype.keyDownHandler = function (nativeEvent)
 	}
 };
 
-XXX_SuggestionController.prototype.resetTypeAhead = function ()
-{
-	XXX_DOM.setInner(this.elements.typeAhead, '');
-};
-
 XXX_SuggestionController.prototype.startRequestSuggestionsDelay = function ()
 {
 	if (this.requestSuggestionsDelayInstance)
@@ -398,7 +356,7 @@ XXX_SuggestionController.prototype.cancelPreviousSuggestions = function ()
 	
 	var filteredValueAskingSuggestions = XXX_String.filterSuggestion(valueAskingSuggestions);
 	
-	this.resetTypeAhead();
+	// Reset type ahead
 	
 	this.elements.suggestionOptionSelection.resetSuggestionOptions();			
 	this.elements.suggestionOptionSelection.rerender();
@@ -459,11 +417,11 @@ XXX_SuggestionController.prototype.completedResponseHandler = function (valueAsk
 		if (firstSuggestionOption)
 		{
 			// Correct with original valueAskingSuggestions
-			//XXX_DOM.setInner(this.elements.typeAhead, firstSuggestionOption.valueAskingSuggestions + firstSuggestionOption.complement);
+			// Set type ahead
 		}
 		else
 		{
-			this.resetTypeAhead();
+			// Reset type ahead
 		}
 	}
 	else

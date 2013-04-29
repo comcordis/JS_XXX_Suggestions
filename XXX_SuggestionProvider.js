@@ -32,7 +32,7 @@ var XXX_SuggestionProvider = function ()
 	this.requestSuggestionsCallback = false;
 	this.cancelRequestSuggestionsCallback = false;
 	
-	this.maximumResults = 5;
+	this.maximumResults = 0;
 	
 	this.composeSuggestionOptionLabelCallback = false;
 	
@@ -177,7 +177,7 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 			}
 		}
 		
-		if (XXX_Array.getFirstLevelItemTotal(cachedSuggestions) >= this.maximumResults)
+		if (this.maximumResults > 0 && XXX_Array.getFirstLevelItemTotal(cachedSuggestions) >= this.maximumResults)
 		{
 			retrievalMethod = 'cache';
 		}
@@ -193,8 +193,17 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 	
 	switch (retrievalMethod)
 	{
-		case 'cache':			
-			var limitedSuggestions = XXX_Array.getPart(cachedSuggestions, 0, this.maximumResults);
+		case 'cache':
+			var limitedSuggestions = false;
+			
+			if (this.maximumResults > 0)
+			{
+				limitedSuggestions = XXX_Array.getPart(cachedSuggestions, 0, this.maximumResults);
+			}
+			else
+			{
+				limitedSuggestions = cachedSuggestions;
+			}
 			
 			if (this.completedCallback)
 			{
@@ -308,8 +317,17 @@ XXX_SuggestionProvider.prototype.completedResponseHandler = function (suggestion
 			}
 		}
 		
-		var limitedSuggestions = XXX_Array.getPart(this.processedSuggestions, 0, this.maximumResults);
+		var limitedSuggestions = false;
 		
+		if (this.maximumResults > 0)
+		{
+			limitedSuggestions = XXX_Array.getPart(this.processedSuggestions, 0, this.maximumResults);
+		}
+		else
+		{
+			limitedSuggestions = this.processedSuggestions;
+		}
+				
 		if (this.completedCallback)
 		{
 			this.completedCallback(this.valueAskingSuggestions, limitedSuggestions);

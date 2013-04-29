@@ -15,7 +15,7 @@ var XXX_SuggestionOptionSelection = function (parent, suggestionController)
 	this.elements.parent = XXX_DOM.get(parent);
 	
 	this.elements.suggestionOptionsContainer = XXX_DOM.createElementNode('div');
-	XXX_CSS.setClass(this.elements.suggestionOptionsContainer, 'suggestionOptionsContainer');
+	XXX_CSS.setClass(this.elements.suggestionOptionsContainer, 'dialog');
 	XXX_DOM.appendChildNode(this.elements.parent, this.elements.suggestionOptionsContainer);
 	
 		
@@ -45,17 +45,6 @@ var XXX_SuggestionOptionSelection = function (parent, suggestionController)
 
 XXX_SuggestionOptionSelection.prototype.propagateDownSelectedSuggestion = function ()
 {
-	var selectedSuggestionOption = this.getSelectedSuggestionOption();
-		
-	if (selectedSuggestionOption)
-	{
-		this.elements.suggestionController.setValue(selectedSuggestionOption.suggestedValue);
-		
-		XXX_DOM_NativeHelpers.nativeCharacterLineInput.focus(this.elements.suggestionController.elements.input);
-	}
-	
-	this.elements.suggestionController.updateLineCharacterLength();
-	
 	this.elements.suggestionController.propagateDataFromSelectedSuggestionOption();
 };
 
@@ -98,7 +87,7 @@ XXX_SuggestionOptionSelection.prototype.suggestionOptionMousedOver = function (I
 				this.selectedIndex = index;
 			}
 			
-			this.rerender();
+			this.rehighlight();
 		}
 	}
 };
@@ -107,7 +96,7 @@ XXX_SuggestionOptionSelection.prototype.suggestionOptionsMousedOut = function ()
 {
 	this.selectedIndex = -1;
 			
-	this.rerender();
+	this.rehighlight();
 	
 	this.mouseOver = false;
 };
@@ -205,9 +194,23 @@ XXX_SuggestionOptionSelection.prototype.getSuggestionOptionTotal = function ()
 	return XXX_Array.getFirstLevelItemTotal(this.suggestionOptions);
 };
 
+XXX_SuggestionOptionSelection.prototype.rehighlight = function ()
+{
+	for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(this.suggestionOptions); i < iEnd; ++i)
+	{
+		var tempDiv = this.elements.suggestionOptionLinks[i];
+		
+		XXX_CSS.setClass(tempDiv, (i == this.selectedIndex ? 'suggestionOptionSelected' : 'suggestionOption'));
+	}
+};
+
 XXX_SuggestionOptionSelection.prototype.rerender = function ()
 {
 	var tempSuggestionOptions = '';
+	
+	this.elements.suggestionOptionLinks = [];
+	
+	XXX_DOM.removeChildNodes(this.elements.suggestionOptions);
 	
 	this.IDToSuggestionOptionConversion = [];
 	
@@ -220,12 +223,15 @@ XXX_SuggestionOptionSelection.prototype.rerender = function ()
 		
 		this.IDToSuggestionOptionConversion[ID] = suggestionOption;
 		
-		tempSuggestionOptions += '<div id="' + ID + '" class="' + (i == this.selectedIndex ? 'suggestionOptionSelected' : 'suggestionOption') + '">';
-		tempSuggestionOptions += suggestionOption.label;
-		tempSuggestionOptions += '</div>';
+		var tempDiv = XXX_DOM.createElementNode('div');
+		XXX_DOM.setID(tempDiv, ID);
+		XXX_CSS.setClass(tempDiv, (i == this.selectedIndex ? 'suggestionOptionSelected' : 'suggestionOption'));
+		XXX_DOM.setInner(tempDiv, suggestionOption.label);
+		
+		XXX_DOM.appendChildNode(this.elements.suggestionOptions, tempDiv);
+		
+		this.elements.suggestionOptionLinks.push(tempDiv);
 	}
-	
-	XXX_DOM.setInner(this.elements.suggestionOptions, tempSuggestionOptions);
 	
 	if (iEnd == 0)
 	{
@@ -274,5 +280,5 @@ XXX_SuggestionOptionSelection.prototype.hide = function ()
 
 XXX_SuggestionOptionSelection.prototype.reposition = function ()
 {
-	XXX_CSS_Position.nextToOffsetElement(this.elements.suggestionController.elements.input, this.elements.suggestionOptionsContainer, ['bottomRight'], 10);
+	XXX_CSS_Position.nextToOffsetElement(this.elements.suggestionController.elements.input, this.elements.suggestionOptionsContainer, ['bottomRight'], 5);
 };
