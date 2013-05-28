@@ -16,7 +16,7 @@ var XXX_SuggestionOptionSelection = function (parent, suggestionController)
 	
 	this.elements.suggestionOptionsContainer = XXX_DOM.createElementNode('div');
 	XXX_CSS.setClass(this.elements.suggestionOptionsContainer, 'dialog');
-	XXX_DOM.appendChildNode(this.elements.parent, this.elements.suggestionOptionsContainer);
+	XXX_DOM.appendChildNode(XXX_DOM.getBody(), this.elements.suggestionOptionsContainer);
 	
 		
 	this.elements.suggestionOptions = XXX_DOM.createElementNode('div');
