@@ -58,7 +58,7 @@ Last known result? Anders melding, we begrijpen uw locatie niet bla bla. X
 
 */
 	
-var XXX_SuggestionController = function (input, suggestionProvider)
+var XXX_SuggestionController = function (input, suggestionProvider, example)
 {
 	this.ID = XXX.createID();
 	
@@ -69,6 +69,8 @@ var XXX_SuggestionController = function (input, suggestionProvider)
 	this.filteredValueAskingSuggestions = '';
 	this.previousCaretPosition = -1;
 	
+	this.example = example;
+	
 	this.elements = {};
 	
 	this.elements.input = XXX_DOM.get(input);
@@ -77,6 +79,7 @@ var XXX_SuggestionController = function (input, suggestionProvider)
 	
 		
 	XXX_CSS.setStyle(this.elements.input, 'background-color', 'transparent');
+	
 	
 	var hiddenInputDataName = '';
 	if (XXX_Type.isValue(this.elements.input.name))
@@ -89,13 +92,17 @@ var XXX_SuggestionController = function (input, suggestionProvider)
 	}
 	hiddenInputDataName += '_data';
 	
-	var hiddenInputData = XXX_DOM.createElementNode('input');
-	hiddenInputData.type = 'hidden';
-	hiddenInputData.name = hiddenInputDataName;
+	var hiddenInputData = XXX_DOM.get(hiddenInputDataName);
+	
+	if (!hiddenInputData)
+	{
+		hiddenInputData = XXX_DOM.createElementNode('input');
+		hiddenInputData.type = 'hidden';
+		hiddenInputData.name = hiddenInputDataName;
+		
+		XXX_DOM.appendChildNode(this.elements.parent, hiddenInputData);
+	}
 	this.elements.hiddenInputData = hiddenInputData;
-	
-	XXX_DOM.appendChildNode(this.elements.parent, this.elements.hiddenInputData);
-	
 	
 	
 	this.eventDispatcher = new XXX_EventDispatcher();
@@ -121,15 +128,44 @@ var XXX_SuggestionController = function (input, suggestionProvider)
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'blur', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.hide();
+		XXX_SuggestionController_instance.tryEnablingExample();
 	});
 	
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'focus', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.show();
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.rerender();
+		XXX_SuggestionController_instance.tryDisablingExample();
 	});
 	
+	this.tryEnablingExample();
 };
+
+
+XXX_SuggestionController.prototype.tryDisablingExample = function ()
+{
+	var value = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.input);
+	
+	if (value == this.example)
+	{
+		XXX_DOM_NativeHelpers.nativeCharacterLineInput.setValue(this.elements.input, '');
+		
+		//XXX_CSS.removeClass(this.elements.input, 'XXX_TextInputExample_example');
+	}
+};
+
+XXX_SuggestionController.prototype.tryEnablingExample = function ()
+{
+	var value = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.input);
+	
+	if (value == '')
+	{
+		XXX_DOM_NativeHelpers.nativeCharacterLineInput.setValue(this.elements.input, this.example);
+		
+		//XXX_CSS.addClass(this.elements.input, 'XXX_TextInputExample_example');
+	}
+};
+
 
 XXX_SuggestionController.prototype.getData = function ()
 {
