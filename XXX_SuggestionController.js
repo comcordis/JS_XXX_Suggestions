@@ -62,7 +62,7 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 {
 	this.ID = XXX.createID();
 	
-	this.requestSuggestionsDelay = 220;
+	this.requestSuggestionsDelay = 40;
 	this.requestSuggestionsDelayInstance = false;
 	
 	this.valueAskingSuggestions = '';
