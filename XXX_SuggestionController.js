@@ -177,6 +177,21 @@ XXX_SuggestionController.prototype.getData = function ()
 	{
 		result = selectedSuggestionOption.data;
 	}
+	else
+	{
+		var tempData = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.hiddenInputData);
+		
+		if (tempData)
+		{
+			tempData = XXX_String_JSON.decode(tempData);
+		}
+		else
+		{
+			tempData = false;
+		}
+		
+		result = tempData;
+	}
 	
 	return result;
 };
