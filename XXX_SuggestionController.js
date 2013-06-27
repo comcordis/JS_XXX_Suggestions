@@ -69,7 +69,11 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 	this.filteredValueAskingSuggestions = '';
 	this.previousCaretPosition = -1;
 	
-	this.example = example;
+	this.example = '...';
+	if (example)
+	{
+		this.example = example;
+	}
 	
 	this.elements = {};
 	
