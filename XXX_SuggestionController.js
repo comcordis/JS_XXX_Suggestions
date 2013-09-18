@@ -174,6 +174,7 @@ XXX_SuggestionController.prototype.clickedClear = function ()
 	XXX_DOM_NativeHelpers.nativeCharacterLineInput.setValue(this.elements.input, '');
 	this.hideClear();
 	this.resetDataFromSelectedSuggestionOption();
+	this.elements.suggestionOptionSelection.resetSuggestionOptions();
 	this.tryEnablingExample();
 };
 
