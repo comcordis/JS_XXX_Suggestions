@@ -191,7 +191,7 @@ XXX_SuggestionController.prototype.updateClearVisibility = function ()
 {
 	var value = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.input);
 	
-	if (value == '')
+	if (value == '' || value == this.example)
 	{
 		this.hideClear();
 	}
