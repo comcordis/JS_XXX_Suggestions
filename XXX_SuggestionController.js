@@ -84,8 +84,7 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 	var clearLink = XXX_DOM.createElementNode('a');
 	clearLink.href = '#';
 	XXX_DOM.setInner(clearLink, 'X');
-	XXX_CSS.setClass(clearLink, 'YAT_icon');
-	XXX_DOM.setInner(clearLink, '<img src="' + XXX_URI.wwwProtocolPrefix + XXX_URI.staticURIPathPrefix + 'YAT/presenters/images/icons/black/cross.png">');
+	XXX_DOM.setInner(clearLink, '<img class="YAT_icon" src="' + XXX_URI.wwwProtocolPrefix + XXX_URI.staticURIPathPrefix + 'YAT/presenters/images/icons/black/cross.png">');
 	
 	XXX_DOM.appendChildNode(this.elements.parent, clearLink);
 	
