@@ -81,6 +81,16 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 	this.elements.suggestionProvider = suggestionProvider;
 	this.elements.parent = XXX_DOM.getParent(this.elements.input);
 	
+	var clearLink = XXX_DOM.createElementNode('a');
+	clearLink.href = '#';
+	XXX_DOM.setInner(clearLink, 'X');
+	XXX_CSS.setClass(clearLink, 'YAT_icon');
+	XXX_DOM.setInner(clearLink, '<img src="' + XXX_URI.wwwProtocolPrefix + XXX_URI.staticURIPathPrefix + 'YAT/presenters/images/icons/black/cross.png">');
+	
+	XXX_DOM.appendChildNode(this.elements.parent, clearLink);
+	
+	this.elements.clearLink = clearLink;
+	
 		
 	XXX_CSS.setStyle(this.elements.input, 'background-color', 'transparent');
 	
@@ -122,17 +132,20 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'keyDown', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.keyDownHandler(nativeEvent);
+		XXX_SuggestionController_instance.updateClearVisibility();
 	});
 	
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'keyUp', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.keyUpHandler(nativeEvent);
+		XXX_SuggestionController_instance.updateClearVisibility();
 	});
 		
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'blur', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.hide();
 		XXX_SuggestionController_instance.tryEnablingExample();
+		XXX_SuggestionController_instance.updateClearVisibility();
 	});
 	
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'focus', function (nativeEvent)
@@ -140,11 +153,53 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.show();
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.rerender();
 		XXX_SuggestionController_instance.tryDisablingExample();
+		XXX_SuggestionController_instance.updateClearVisibility();
+	});
+	
+	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.clearLink, 'click', function (nativeEvent)
+	{
+		nativeEvent.preventDefault();
+		nativeEvent.stopPropagation();
+		
+		XXX_SuggestionController_instance.clickedClear();
 	});
 	
 	this.tryEnablingExample();
+	this.updateClearVisibility();
 };
 
+
+XXX_SuggestionController.prototype.clickedClear = function ()
+{
+	XXX_DOM_NativeHelpers.nativeCharacterLineInput.setValue(this.elements.input, '');
+	this.hideClear();
+	this.resetDataFromSelectedSuggestionOption();
+	this.tryEnablingExample();
+};
+
+XXX_SuggestionController.prototype.hideClear = function ()
+{
+	XXX_CSS.setStyle(this.elements.clearLink, 'display', 'none');
+};
+
+XXX_SuggestionController.prototype.showClear = function ()
+{
+	XXX_CSS.setStyle(this.elements.clearLink, 'display', 'inline');
+};
+
+XXX_SuggestionController.prototype.updateClearVisibility = function ()
+{
+	var value = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.input);
+	
+	if (value == '')
+	{
+		this.hideClear();
+	}
+	else
+	{
+		this.showClear();
+	}
+};
 
 XXX_SuggestionController.prototype.tryDisablingExample = function ()
 {
@@ -166,6 +221,7 @@ XXX_SuggestionController.prototype.tryEnablingExample = function ()
 	{
 		XXX_DOM_NativeHelpers.nativeCharacterLineInput.setValue(this.elements.input, this.example);
 		
+		this.hideClear();
 		//XXX_CSS.addClass(this.elements.input, 'XXX_TextInputExample_example');
 	}
 };
