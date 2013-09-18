@@ -176,6 +176,9 @@ XXX_SuggestionController.prototype.clickedClear = function ()
 	this.resetDataFromSelectedSuggestionOption();
 	this.elements.suggestionOptionSelection.resetSuggestionOptions();
 	this.tryEnablingExample();
+	this.elements.input.focus();
+	this.elements.suggestionOptionSelection.show();
+	this.elements.suggestionOptionSelection.rerender();
 };
 
 XXX_SuggestionController.prototype.hideClear = function ()
