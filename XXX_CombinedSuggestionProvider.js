@@ -27,15 +27,29 @@ XXX_CombinedSuggestionProvider.prototype.setMaximumResults = function (maximumRe
 
 XXX_CombinedSuggestionProvider.prototype.requestSuggestions = function (valueAskingSuggestions, completedCallback, failedCallback)
 {
+	this.cancelRequestSuggestions();
+	
 	this.valueAskingSuggestions = valueAskingSuggestions;
 	this.completedCallback = completedCallback;
 	this.failedCallback = failedCallback;
 	
 	this.currentStep = 0;
 	this.suggestionOptionsQueue = [];
-	
+		
 	this.tryNextStep();
 };
+
+XXX_CombinedSuggestionProvider.prototype.cancelRequestSuggestions = function ()
+{
+	for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(this.elements.steps); i < iEnd; ++i)
+	{
+		for (var j = 0, jEnd = XXX_Array.getFirstLevelItemTotal(this.elements.steps[i]); j < jEnd; ++j)
+		{
+			this.elements.steps[i][j].cancelRequestSuggestions();
+		}
+	}
+};
+
 
 XXX_CombinedSuggestionProvider.prototype.tryNextStep = function ()
 {
@@ -108,7 +122,7 @@ XXX_CombinedSuggestionProvider.prototype.failedResponseHandler = function ()
 	
 	if (this.receivedResponsesForThisStep == this.expectedResponsesForThisStep)
 	{
-		this.tryNextStep();
+		//this.tryNextStep();
 	}
 };
 
