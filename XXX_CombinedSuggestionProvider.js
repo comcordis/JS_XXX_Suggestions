@@ -122,7 +122,7 @@ XXX_CombinedSuggestionProvider.prototype.failedResponseHandler = function ()
 	
 	if (this.receivedResponsesForThisStep == this.expectedResponsesForThisStep)
 	{
-		this.tryNextStep();
+		//this.tryNextStep();
 		
 		// TODO, place results in front of other? As in if google places is faster, use that first
 		
