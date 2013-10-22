@@ -69,6 +69,8 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 	this.filteredValueAskingSuggestions = '';
 	this.previousCaretPosition = -1;
 	
+	this.focused = false;
+	
 	this.example = '...';
 	if (example)
 	{
@@ -142,6 +144,7 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 		
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'blur', function (nativeEvent)
 	{
+		XXX_SuggestionController_instance.focused = false;
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.hide();
 		XXX_SuggestionController_instance.tryEnablingExample();
 		XXX_SuggestionController_instance.updateClearVisibility();
@@ -149,6 +152,7 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 	
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'focus', function (nativeEvent)
 	{
+		XXX_SuggestionController_instance.focused = true;
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.show();
 		XXX_SuggestionController_instance.elements.suggestionOptionSelection.rerender();
 		XXX_SuggestionController_instance.tryDisablingExample();
@@ -561,7 +565,12 @@ XXX_SuggestionController.prototype.completedResponseHandler = function (valueAsk
 	{
 		this.elements.suggestionOptionSelection.resetSuggestionOptions();
 		this.elements.suggestionOptionSelection.addSuggestionOptions(processedSuggestions);		
-		this.elements.suggestionOptionSelection.show();		
+		
+		if (this.focused)
+		{
+			this.elements.suggestionOptionSelection.show();	
+		}
+		
 		this.elements.suggestionOptionSelection.rerender();
 		
 		var firstSuggestionOption = this.elements.suggestionOptionSelection.getFirstSuggestionOption();
