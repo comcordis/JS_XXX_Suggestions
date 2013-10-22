@@ -62,7 +62,7 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 {
 	this.ID = XXX.createID();
 	
-	this.requestSuggestionsDelay = 40;
+	this.requestSuggestionsDelay = 80;
 	this.requestSuggestionsDelayInstance = false;
 	
 	this.valueAskingSuggestions = '';
@@ -285,6 +285,42 @@ XXX_SuggestionController.prototype.resetDataFromSelectedSuggestionOption = funct
 	//this.eventDispatcher.dispatchEventToListeners('change', this);
 };
 
+XXX_SuggestionController.prototype.trySelectingNextSuggestionIfEmpty = function ()
+{
+	if (this.elements.suggestionOptionSelection.getSuggestionOptionTotal() > 0)
+	{
+		var tempData = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.hiddenInputData);
+		
+		if (tempData)
+		{
+			tempData = XXX_String_JSON.decode(tempData);
+		}
+		else
+		{
+			tempData = false;
+		}
+		
+		if (!tempData)
+		{
+			this.elements.suggestionOptionSelection.selectNextSuggestionOption();
+			this.elements.suggestionOptionSelection.rerender();
+			
+			var selectedSuggestionOption = this.elements.suggestionOptionSelection.getSelectedSuggestionOption();
+			
+			if (selectedSuggestionOption)
+			{
+				this.setValue(selectedSuggestionOption.suggestedValue);
+			}
+			else
+			{
+				this.setValue(this.valueAskingSuggestions);
+			}
+		
+			this.propagateDataFromSelectedSuggestionOption();
+		}
+	}
+};
+
 XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 {
 	var requestSuggestions = false;
@@ -465,6 +501,8 @@ XXX_SuggestionController.prototype.startRequestSuggestionsDelay = function ()
 
 XXX_SuggestionController.prototype.cancelPreviousSuggestions = function ()
 {
+	this.elements.suggestionProvider.cancelRequestSuggestions();
+	
 	var valueAskingSuggestions = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.input);
 	var valueAskingSuggestionsCharacterLength = XXX_String.getCharacterLength(valueAskingSuggestions);	
 	

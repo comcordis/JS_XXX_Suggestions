@@ -1,8 +1,16 @@
+/*
+
+Steps are subsequent
+Within steps in parallel
+
+*/
 
 var XXX_CombinedSuggestionProvider = function ()
 {
 	this.valueAskingSuggestions = '';
 	this.completedCallback = false;
+	
+	this.gradualCompletion = true;
 	
 	this.elements = {};
 	
@@ -34,13 +42,19 @@ XXX_CombinedSuggestionProvider.prototype.requestSuggestions = function (valueAsk
 	this.failedCallback = failedCallback;
 	
 	this.currentStep = 0;
+	this.expectedResponsesForThisStep = 0;
+	this.receivedResponsesForThisStep = 0;
 	this.suggestionOptionsQueue = [];
-		
+			
 	this.tryNextStep();
 };
 
 XXX_CombinedSuggestionProvider.prototype.cancelRequestSuggestions = function ()
 {
+	this.cancellingRequestSuggestions = true;
+	
+	this.currentStep = 0;
+	
 	for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(this.elements.steps); i < iEnd; ++i)
 	{
 		for (var j = 0, jEnd = XXX_Array.getFirstLevelItemTotal(this.elements.steps[i]); j < jEnd; ++j)
@@ -48,13 +62,13 @@ XXX_CombinedSuggestionProvider.prototype.cancelRequestSuggestions = function ()
 			this.elements.steps[i][j].cancelRequestSuggestions();
 		}
 	}
+	
+	this.cancellingRequestSuggestions = false;
 };
 
 
 XXX_CombinedSuggestionProvider.prototype.tryNextStep = function ()
 {
-	//XXX_JS.errorNotification(1, 'Trying step ' + this.currentStep);
-	
 	if (XXX_Array.getFirstLevelItemTotal(this.suggestionOptionsQueue) < this.maximumResults)
 	{
 		if (this.currentStep < this.steps)
@@ -70,14 +84,16 @@ XXX_CombinedSuggestionProvider.prototype.tryNextStep = function ()
 				
 				for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(subSuggestionProvidersForStep); i < iEnd; ++i)
 				{
-					var subSuggestionProviderFailedCallback = function ()
+					var internalIndex = [this.currentStep, i];
+					
+					var subSuggestionProviderFailedCallback = function (valueAskingSuggestions)
 					{
-						XXX_CombinedSuggestionProvider_instance.failedResponseHandler();
+						XXX_CombinedSuggestionProvider_instance.failedResponseHandler(internalIndex, valueAskingSuggestions);
 					};
 					
 					var subSuggestionProviderCompletedCallback = function (valueAskingSuggestions, suggestionOptions)
 					{
-						XXX_CombinedSuggestionProvider_instance.completedResponseHandler(valueAskingSuggestions, suggestionOptions);
+						XXX_CombinedSuggestionProvider_instance.completedResponseHandler(internalIndex, valueAskingSuggestions, suggestionOptions);
 					};
 					
 					subSuggestionProvidersForStep[i].requestSuggestions(this.valueAskingSuggestions, subSuggestionProviderCompletedCallback, subSuggestionProviderFailedCallback);
@@ -108,66 +124,115 @@ XXX_CombinedSuggestionProvider.prototype.triggerCompletedCallback = function ()
 	{
 		var suggestionOptionsQueue = this.suggestionOptionsQueue;
 		
-		suggestionOptionsQueue = XXX_Array.getPart(suggestionOptionsQueue, 0, this.maximumResults);
+		var filteredSuggestionOptionsQueue = [];
 		
-		this.completedCallback(this.valueAskingSuggestions, suggestionOptionsQueue);
+		for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(this.suggestionOptionsQueue); i < iEnd; ++i)
+		{
+			filteredSuggestionOptionsQueue.push(this.suggestionOptionsQueue[i][1]);
+		}
+		
+		filteredSuggestionOptionsQueue = XXX_Array.getPart(filteredSuggestionOptionsQueue, 0, this.maximumResults);
+		
+		this.completedCallback(this.valueAskingSuggestions, filteredSuggestionOptionsQueue);
 	}
 };
 
-XXX_CombinedSuggestionProvider.prototype.failedResponseHandler = function ()
+XXX_CombinedSuggestionProvider.prototype.failedResponseHandler = function (internalIndex, valueAskingSuggestions)
 {
-	//XXX_JS.errorNotification(1, 'Received step ' + this.currentStep + ' failed response');
-	
-	++this.receivedResponsesForThisStep;
-	
-	if (this.receivedResponsesForThisStep == this.expectedResponsesForThisStep)
+	if (!this.cancellingRequestSuggestions)
 	{
-		//this.tryNextStep();
-		
-		// TODO, place results in front of other? As in if google places is faster, use that first
-		
-		/*
-		
-		Try all on a step at the same time,
-		Internal order determines prefixing, suffixing etc.
-		
-		*/
+		if (valueAskingSuggestions == this.valueAskingSuggestions)
+		{	
+			++this.receivedResponsesForThisStep;
+			
+			if (this.receivedResponsesForThisStep == this.expectedResponsesForThisStep)
+			{
+				this.tryNextStep();
+				
+				// TODO, place results in front of other? As in if google places is faster, use that first
+				
+				/*
+				
+				Try all on a step at the same time,
+				Internal order determines prefixing, suffixing etc.
+				
+				*/
+			}
+		}
 	}
 };
 
-XXX_CombinedSuggestionProvider.prototype.completedResponseHandler = function (valueAskingSuggestions, suggestionOptions)
+XXX_CombinedSuggestionProvider.prototype.completedResponseHandler = function (internalIndex, valueAskingSuggestions, suggestionOptions)
 {
-	//XXX_JS.errorNotification(1, 'Received step ' + this.currentStep + ' completed response');
-	
-	//XXX.debug.blaap43 = suggestionOptions;
-	
-	++this.receivedResponsesForThisStep;
-	
-	for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(suggestionOptions); i < iEnd; ++i)
-	{
-		this.suggestionOptionsQueue.push(suggestionOptions[i]);
-	}
-	
-	this.receivedResponses += 1;
-	
-	if (this.receivedResponsesForThisStep == this.expectedResponsesForThisStep)
-	{
-		this.tryNextStep();
+	//var internalIndex = [0, 0];
+	if (valueAskingSuggestions == this.valueAskingSuggestions)
+	{	
+		++this.receivedResponsesForThisStep;
+		
+		if (XXX_Type.isArray(internalIndex))
+		{
+			for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(suggestionOptions); i < iEnd; ++i)
+			{
+				this.suggestionOptionsQueue.push([internalIndex, suggestionOptions[i]]);
+			}
+		}
+		
+		this.suggestionOptionsQueue.sort(function (a, b)
+		{
+			var result = 0;
+			
+			if (a[0][0] == b[0][0])
+			{
+				if (a[0][1] < b[0][1])
+				{
+					result = 1;
+				}
+				else if (a[0][1] > b[0][1])
+				{
+					result = -1;
+				}
+			}
+			else if (a[0][0] < b[0][0])
+			{
+				result = 1;
+			}
+			else if (a[0][0] > b[0][0])
+			{
+				result = -1;
+			}
+			
+			return result;
+		});
+		
+		if (this.gradualCompletion)
+		{
+			this.triggerCompletedCallback();
+		}
+		
+		if (this.receivedResponsesForThisStep == this.expectedResponsesForThisStep)
+		{
+			this.tryNextStep();
+		}
 	}
 };
 
 XXX_CombinedSuggestionProvider.prototype.addSuggestionProvidersForStep = function ()
 {
-	var tempArguments = arguments;
+	var suggestionProvidersForStep = arguments;
 	
-	var subSuggestionProvidersForStep = [];
-	
-	for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(tempArguments); i < iEnd; ++i)
+	if (XXX_Type.isNumericArray(suggestionProvidersForStep[0]))
 	{
-		subSuggestionProvidersForStep.push(tempArguments[i]);
+		suggestionProvidersForStep = suggestionProvidersForStep[0];
+	}
+		
+	var tempSuggestionProvidersForStep = [];
+	
+	for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(suggestionProvidersForStep); i < iEnd; ++i)
+	{
+		tempSuggestionProvidersForStep.push(suggestionProvidersForStep[i]);
 	}
 	
-	this.elements.steps.push(subSuggestionProvidersForStep);
+	this.elements.steps.push(tempSuggestionProvidersForStep);
 	
 	++this.steps;
 };
