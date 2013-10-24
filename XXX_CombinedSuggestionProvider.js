@@ -26,6 +26,8 @@ var XXX_CombinedSuggestionProvider = function ()
 	this.receivedResponsesForThisStep = 0;
 	
 	this.suggestionOptionsQueue = [];
+	
+	this.cancelledPreviousRequest = false;
 };
 
 XXX_CombinedSuggestionProvider.prototype.setMaximumResults = function (maximumResults)
@@ -35,25 +37,26 @@ XXX_CombinedSuggestionProvider.prototype.setMaximumResults = function (maximumRe
 
 XXX_CombinedSuggestionProvider.prototype.requestSuggestions = function (valueAskingSuggestions, completedCallback, failedCallback)
 {
-	this.cancelRequestSuggestions();
-	
 	this.valueAskingSuggestions = valueAskingSuggestions;
+	
 	this.completedCallback = completedCallback;
 	this.failedCallback = failedCallback;
 	
 	this.currentStep = 0;
+	
 	this.expectedResponsesForThisStep = 0;
 	this.receivedResponsesForThisStep = 0;
+	
 	this.suggestionOptionsQueue = [];
-			
+	
+	this.cancelledPreviousRequest = false;
+	
 	this.tryNextStep();
 };
 
 XXX_CombinedSuggestionProvider.prototype.cancelRequestSuggestions = function ()
 {
-	this.cancellingRequestSuggestions = true;
-	
-	this.currentStep = 0;
+	this.cancelledPreviousRequest = true;
 	
 	for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(this.elements.steps); i < iEnd; ++i)
 	{
@@ -62,59 +65,59 @@ XXX_CombinedSuggestionProvider.prototype.cancelRequestSuggestions = function ()
 			this.elements.steps[i][j].cancelRequestSuggestions();
 		}
 	}
-	
-	this.cancellingRequestSuggestions = false;
 };
 
 
 XXX_CombinedSuggestionProvider.prototype.tryNextStep = function ()
 {
-	if (XXX_Array.getFirstLevelItemTotal(this.suggestionOptionsQueue) < this.maximumResults)
+	if (!this.cancelledPreviousRequest)
 	{
-		if (this.currentStep < this.steps)
+		if (XXX_Array.getFirstLevelItemTotal(this.suggestionOptionsQueue) < this.maximumResults)
 		{
-			var subSuggestionProvidersForStep = this.elements.steps[this.currentStep];
-			
-			this.expectedResponsesForThisStep = XXX_Array.getFirstLevelItemTotal(subSuggestionProvidersForStep);
-			this.receivedResponsesForThisStep = 0;
-			
-			if (this.expectedResponsesForThisStep)
+			if (this.currentStep < this.steps)
 			{
-				var XXX_CombinedSuggestionProvider_instance = this;
+				var subSuggestionProvidersForStep = this.elements.steps[this.currentStep];
 				
-				for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(subSuggestionProvidersForStep); i < iEnd; ++i)
+				this.expectedResponsesForThisStep = XXX_Array.getFirstLevelItemTotal(subSuggestionProvidersForStep);
+				this.receivedResponsesForThisStep = 0;
+				
+				++this.currentStep;
+				
+				if (this.expectedResponsesForThisStep)
 				{
-					var internalIndex = [this.currentStep, i];
+					var XXX_CombinedSuggestionProvider_instance = this;
 					
-					var subSuggestionProviderFailedCallback = function (valueAskingSuggestions)
+					for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(subSuggestionProvidersForStep); i < iEnd; ++i)
 					{
-						XXX_CombinedSuggestionProvider_instance.failedResponseHandler(internalIndex, valueAskingSuggestions);
-					};
-					
-					var subSuggestionProviderCompletedCallback = function (valueAskingSuggestions, suggestionOptions)
-					{
-						XXX_CombinedSuggestionProvider_instance.completedResponseHandler(internalIndex, valueAskingSuggestions, suggestionOptions);
-					};
-					
-					subSuggestionProvidersForStep[i].requestSuggestions(this.valueAskingSuggestions, subSuggestionProviderCompletedCallback, subSuggestionProviderFailedCallback);
+						var internalIndex = [this.currentStep, i];
+						
+						var subSuggestionProviderFailedCallback = function (valueAskingSuggestions)
+						{
+							XXX_CombinedSuggestionProvider_instance.failedResponseHandler(internalIndex, valueAskingSuggestions);
+						};
+						
+						var subSuggestionProviderCompletedCallback = function (valueAskingSuggestions, suggestionOptions)
+						{
+							XXX_CombinedSuggestionProvider_instance.completedResponseHandler(internalIndex, valueAskingSuggestions, suggestionOptions);
+						};
+						
+						subSuggestionProvidersForStep[i].requestSuggestions(this.valueAskingSuggestions, subSuggestionProviderCompletedCallback, subSuggestionProviderFailedCallback);
+					}
+				}
+				else
+				{
+					this.tryNextStep();
 				}
 			}
-			
-			++this.currentStep;
-			
-			if (this.expectedResponsesForThisStep == 0)
+			else
 			{
-				this.tryNextStep();
+				this.triggerCompletedCallback();
 			}
 		}
 		else
 		{
 			this.triggerCompletedCallback();
 		}
-	}
-	else
-	{
-		this.triggerCompletedCallback();
 	}
 };
 
@@ -139,32 +142,28 @@ XXX_CombinedSuggestionProvider.prototype.triggerCompletedCallback = function ()
 
 XXX_CombinedSuggestionProvider.prototype.failedResponseHandler = function (internalIndex, valueAskingSuggestions)
 {
-	if (!this.cancellingRequestSuggestions)
-	{
-		if (valueAskingSuggestions == this.valueAskingSuggestions)
-		{	
-			++this.receivedResponsesForThisStep;
+	if (valueAskingSuggestions == this.valueAskingSuggestions)
+	{	
+		++this.receivedResponsesForThisStep;
+		
+		if (this.receivedResponsesForThisStep == this.expectedResponsesForThisStep)
+		{
+			this.tryNextStep();
 			
-			if (this.receivedResponsesForThisStep == this.expectedResponsesForThisStep)
-			{
-				this.tryNextStep();
-				
-				// TODO, place results in front of other? As in if google places is faster, use that first
-				
-				/*
-				
-				Try all on a step at the same time,
-				Internal order determines prefixing, suffixing etc.
-				
-				*/
-			}
+			// TODO, place results in front of other? As in if google places is faster, use that first
+			
+			/*
+			
+			Try all on a step at the same time,
+			Internal order determines prefixing, suffixing etc.
+			
+			*/
 		}
 	}
 };
 
 XXX_CombinedSuggestionProvider.prototype.completedResponseHandler = function (internalIndex, valueAskingSuggestions, suggestionOptions)
 {
-	//var internalIndex = [0, 0];
 	if (valueAskingSuggestions == this.valueAskingSuggestions)
 	{	
 		++this.receivedResponsesForThisStep;

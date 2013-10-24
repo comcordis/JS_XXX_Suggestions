@@ -30,7 +30,7 @@ var XXX_SuggestionProviderHelpers =
 	typeAhead:
 		- if match (suggestedValue)
 		- if not (empty)
-		
+	
 	*/
 	
 	

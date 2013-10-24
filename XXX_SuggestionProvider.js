@@ -16,7 +16,7 @@ var XXX_SuggestionProvider = function ()
 	
 	this.allowCachedSuggestions = false;
 	this.cachedSuggestions = [];
-		
+	
 	this.valueAskingSuggestions = '';
 	
 	this.triedValuesToComplete = [];
@@ -128,10 +128,9 @@ XXX_SuggestionProvider.prototype.cancelRequestSuggestions = function ()
 	}
 };
 
-
 XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSuggestions, completedCallback, failedCallback)
 {
-	this.cancelRequestSuggestions();
+	//this.cancelRequestSuggestions();
 	
 	this.valueAskingSuggestions = valueAskingSuggestions;
 	this.completedCallback = completedCallback;
@@ -213,19 +212,24 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 		case 'live':
 			var XXX_SuggestionProvider_instance = this;
 			
-			var completedCallback = function (suggestionsResponse)
+			var completedCallback = function (valueAskingSuggestions, suggestionsResponse)
 			{
-				XXX_SuggestionProvider_instance.completedResponseHandler(suggestionsResponse);
+				XXX_SuggestionProvider_instance.completedResponseHandler(valueAskingSuggestions, suggestionsResponse);
 			};
 			
 			var failedCallback = function ()
 			{
-				XXX_SuggestionProvider_instance.failedResponseHandler();
+				XXX_SuggestionProvider_instance.failedResponseHandler(valueAskingSuggestions);
 			};
 			
 			switch (this.suggestionSource)
 			{
-				case 'serverSideRoute':
+				case 'serverSideRoute':					
+					completedCallback = function (suggestionsResponse)
+					{
+						XXX_SuggestionProvider_instance.completedResponseHandler(suggestionsResponse.valueAskingSuggestions, suggestionsResponse);
+					};
+					
 					XXX_HTTP_Browser_Request_Asynchronous.queueRequest(this.ID + '_requestSuggestions', XXX_URI.composeRouteURI(this.serverSideRoute), [{key: 'valueAskingSuggestions', value: valueAskingSuggestionsLowerCase}, {key: 'maximum', value: this.maximumResults}], completedCallback, 'json', false, 'body', false, failedCallback);
 					break;
 				case 'callback':
@@ -233,10 +237,10 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 					break;
 				case 'simpleIndex':
 					this.simpleIndex.executeQuery(valueAskingSuggestions);
-					this.completedResponseHandler(this.simpleIndex.getSuggestionProviderSourceResponse())
+					this.completedResponseHandler(valueAskingSuggestions, this.simpleIndex.getSuggestionProviderSourceResponse());
 					break;
 				case 'fixed':
-					this.completedResponseHandler(this.fixedSuggestions);
+					this.completedResponseHandler(valueAskingSuggestions, this.fixedSuggestions);
 					break;
 			}
 			
@@ -248,15 +252,15 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 	}
 };
 
-XXX_SuggestionProvider.prototype.failedResponseHandler = function ()
+XXX_SuggestionProvider.prototype.failedResponseHandler = function (valueAskingSuggestions)
 {
 	if (this.failedCallback)
 	{
-		this.failedCallback(this.valueAskingSuggestions);
+		this.failedCallback(valueAskingSuggestions);
 	}
 };
 
-XXX_SuggestionProvider.prototype.completedResponseHandler = function (suggestionsResponse)
+XXX_SuggestionProvider.prototype.completedResponseHandler = function (valueAskingSuggestions, suggestionsResponse)
 {
 	if (suggestionsResponse && suggestionsResponse.type)
 	{
@@ -292,9 +296,7 @@ XXX_SuggestionProvider.prototype.completedResponseHandler = function (suggestion
 				this.processedSuggestions[i].label = XXX_SuggestionProviderHelpers.composeSuggestionOptionLabel(this.processedSuggestions[i]);
 			}
 		}
-		
-		
-		
+				
 		// Append new values to cache
 		if (this.allowCachedSuggestions)
 		{

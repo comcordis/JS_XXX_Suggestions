@@ -53,7 +53,6 @@ Als alle woorden in de resultaten met valueAskingSuggestions begint, dan typeahe
 
 Als er maar 1 result is en dat is hetzelfde als het huidige, dan geen result.
 
-
 Last known result? Anders melding, we begrijpen uw locatie niet bla bla. X
 
 */
@@ -83,47 +82,47 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 	this.elements.suggestionProvider = suggestionProvider;
 	this.elements.parent = XXX_DOM.getParent(this.elements.input);
 	
-	var clearLink = XXX_DOM.createElementNode('a');
-	clearLink.href = '#';
-	XXX_DOM.setInner(clearLink, 'X');
-	XXX_DOM.setInner(clearLink, '<img class="YAT_icon" src="' + XXX_URI.currentHTTPServerProtocolPrefix + XXX_URI.staticURIPathPrefix + 'YAT/presenters/images/icons/black/cross.png">');
-	
-	XXX_DOM.appendChildNode(this.elements.parent, clearLink);
-	
+		var clearLink = XXX_DOM.createElementNode('a');
+		clearLink.href = '#';
+		XXX_DOM.setInner(clearLink, 'X');
+		XXX_DOM.setInner(clearLink, '<img class="YAT_icon" src="' + XXX_URI.currentHTTPServerProtocolPrefix + XXX_URI.staticURIPathPrefix + 'YAT/presenters/images/icons/black/cross.png">');
+		
+		XXX_DOM.appendChildNode(this.elements.parent, clearLink);
+		
 	this.elements.clearLink = clearLink;
 	
-		
+	
 	XXX_CSS.setStyle(this.elements.input, 'background-color', 'transparent');
 	
 	
-	var hiddenInputDataName = '';
-	if (XXX_Type.isValue(this.elements.input.name))
-	{
-		hiddenInputDataName += this.elements.input.name;
-	}
-	else if (XXX_Type.isValue(this.elements.input.id))
-	{
-		hiddenInputDataName += this.elements.input.id;
-	}
+		var hiddenInputDataName = '';
+		if (XXX_Type.isValue(this.elements.input.name))
+		{
+			hiddenInputDataName += this.elements.input.name;
+		}
+		else if (XXX_Type.isValue(this.elements.input.id))
+		{
+			hiddenInputDataName += this.elements.input.id;
+		}
 	hiddenInputDataName += '_data';
 	
-	var hiddenInputData = XXX_DOM.get(hiddenInputDataName);
-	
-	if (!hiddenInputData)
-	{
-		hiddenInputData = XXX_DOM.createElementNode('input');
-		hiddenInputData.type = 'hidden';
-		hiddenInputData.name = hiddenInputDataName;
+		var hiddenInputData = XXX_DOM.get(hiddenInputDataName);
 		
-		XXX_DOM.appendChildNode(this.elements.parent, hiddenInputData);
-	}
+		if (!hiddenInputData)
+		{
+			hiddenInputData = XXX_DOM.createElementNode('input');
+			hiddenInputData.type = 'hidden';
+			hiddenInputData.name = hiddenInputDataName;
+			
+			XXX_DOM.appendChildNode(this.elements.parent, hiddenInputData);
+		}
 	this.elements.hiddenInputData = hiddenInputData;
 	
 	
 	this.eventDispatcher = new XXX_EventDispatcher();
 	
 	XXX_CSS.setClass(this.elements.input, 'suggestionController_valueAskingSuggestions');
-		
+	
 	this.elements.suggestionOptionSelection = new XXX_SuggestionOptionSelection(this.elements.parent, this);
 			
 	var XXX_SuggestionController_instance = this;
@@ -289,8 +288,8 @@ XXX_SuggestionController.prototype.resetDataFromSelectedSuggestionOption = funct
 	//this.eventDispatcher.dispatchEventToListeners('change', this);
 };
 
-XXX_SuggestionController.prototype.trySelectingNextSuggestionIfEmpty = function ()
-{
+XXX_SuggestionController.prototype.trySelectingNextSuggestionIfNoneSelected = function ()
+{	
 	if (this.elements.suggestionOptionSelection.getSuggestionOptionTotal() > 0)
 	{
 		var tempData = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.hiddenInputData);
@@ -321,6 +320,12 @@ XXX_SuggestionController.prototype.trySelectingNextSuggestionIfEmpty = function 
 			}
 		
 			this.propagateDataFromSelectedSuggestionOption();
+			
+			XXX_DOM_NativeHelpers.nativeCharacterLineInput.blur(this.elements.input);
+			this.focused = false;
+			this.elements.suggestionOptionSelection.hide();
+			this.tryEnablingExample();
+			this.updateClearVisibility();
 		}
 	}
 };
@@ -350,6 +355,7 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 			this.elements.suggestionOptionSelection.selectPreviousSuggestionOption();
 			this.elements.suggestionOptionSelection.rerender();
 			
+			
 			var selectedSuggestionOption = this.elements.suggestionOptionSelection.getSelectedSuggestionOption();
 			
 			if (selectedSuggestionOption)
@@ -362,13 +368,14 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 			}
 			
 			this.propagateDataFromSelectedSuggestionOption();
-		}	
+		}
 	}
 	else if (XXX_Device_Keyboard.isKey(nativeEvent, 'downArrow'))
 	{
 		nativeEvent.preventDefault();
 		nativeEvent.stopPropagation();
 		
+		// If no suggestion options, set caret at end
 		if (this.elements.suggestionOptionSelection.getSuggestionOptionTotal() == 0)
 		{
 			XXX_DOM_NativeHelpers.nativeSelectionHandling.setCaretPosition(this.elements.input, valueCharacterLength);
@@ -380,7 +387,7 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 				XXX_DOM_NativeHelpers.nativeSelectionHandling.setCaretPosition(this.elements.input, valueCharacterLength);
 			}
 			else
-			{			
+			{
 				this.elements.suggestionOptionSelection.selectNextSuggestionOption();
 				this.elements.suggestionOptionSelection.rerender();
 				
@@ -402,7 +409,7 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 	else if (XXX_Device_Keyboard.isKey(nativeEvent, 'leftArrow'))
 	{
 		nativeEvent.preventDefault();
-		nativeEvent.stopPropagation();	
+		nativeEvent.stopPropagation();
 	}
 	else if (XXX_Device_Keyboard.isKey(nativeEvent, 'rightArrow'))
 	{
@@ -437,7 +444,7 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 		this.elements.suggestionOptionSelection.hide();
 	}
 	else if (XXX_Device_Keyboard.isKey(nativeEvent, 'backspace'))
-	{	
+	{
 		this.resetDataFromSelectedSuggestionOption();
 		
 		requestSuggestions = true;
@@ -508,15 +515,15 @@ XXX_SuggestionController.prototype.cancelPreviousSuggestions = function ()
 	this.elements.suggestionProvider.cancelRequestSuggestions();
 	
 	var valueAskingSuggestions = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.input);
-	var valueAskingSuggestionsCharacterLength = XXX_String.getCharacterLength(valueAskingSuggestions);	
+	var valueAskingSuggestionsCharacterLength = XXX_String.getCharacterLength(valueAskingSuggestions);
 	
 	var filteredValueAskingSuggestions = XXX_String.filterSuggestion(valueAskingSuggestions);
 	
 	// Reset type ahead
 	
-	this.elements.suggestionOptionSelection.resetSuggestionOptions();			
+	this.elements.suggestionOptionSelection.resetSuggestionOptions();
 	this.elements.suggestionOptionSelection.rerender();
-		
+	
 	if (filteredValueAskingSuggestions == '')
 	{
 		this.valueAskingSuggestions = '';
@@ -566,12 +573,14 @@ XXX_SuggestionController.prototype.completedResponseHandler = function (valueAsk
 		this.elements.suggestionOptionSelection.resetSuggestionOptions();
 		this.elements.suggestionOptionSelection.addSuggestionOptions(processedSuggestions);		
 		
-		if (this.focused)
-		{
-			this.elements.suggestionOptionSelection.show();	
-		}
+		this.elements.suggestionOptionSelection.show();
 		
 		this.elements.suggestionOptionSelection.rerender();
+		
+		if (!this.focused)
+		{
+			this.elements.suggestionOptionSelection.hide();
+		}
 		
 		var firstSuggestionOption = this.elements.suggestionOptionSelection.getFirstSuggestionOption();
 		

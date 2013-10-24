@@ -161,8 +161,6 @@ XXX_SuggestionOptionSelection.prototype.addSuggestionOptions = function (suggest
 		
 		this.suggestionOptions.push(suggestionOption);
 	}
-	
-	XXX.suggestionOptions = suggestionOptions;
 };
 
 XXX_SuggestionOptionSelection.prototype.getFirstSuggestionOption = function ()
