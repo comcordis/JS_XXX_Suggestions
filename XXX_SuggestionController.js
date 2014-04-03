@@ -141,6 +141,12 @@ var XXX_SuggestionController = function (input, suggestionProvider, example)
 		XXX_SuggestionController_instance.updateClearVisibility();
 	});
 		
+	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'keyPress', function (nativeEvent)
+	{
+		XXX_SuggestionController_instance.keyUpHandler(nativeEvent);
+		XXX_SuggestionController_instance.updateClearVisibility();
+	});
+		
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'blur', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.focused = false;
