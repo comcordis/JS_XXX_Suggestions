@@ -57,12 +57,19 @@ Last known result? Anders melding, we begrijpen uw locatie niet bla bla. X
 
 */
 	
-var XXX_SuggestionController = function (input, suggestionProvider, example)
+var XXX_SuggestionController = function (input, suggestionProvider, example, minimumCharacterLength)
 {
 	this.ID = XXX.createID();
 	
 	this.requestSuggestionsDelay = 80;
 	this.requestSuggestionsDelayInstance = false;
+	
+	this.minimumCharacterLength = 3;
+	
+	if (XXX_Type.isPositiveInteger(minimumCharacterLength))
+	{
+		this.minimumCharacterLength = minimumCharacterLength;
+	}
 	
 	this.valueAskingSuggestions = '';
 	this.filteredValueAskingSuggestions = '';
@@ -544,7 +551,7 @@ XXX_SuggestionController.prototype.cancelPreviousSuggestions = function ()
 
 XXX_SuggestionController.prototype.requestSuggestions = function ()
 {
-	if (this.filteredValueAskingSuggestions != '')
+	if (this.filteredValueAskingSuggestions != '' && XXX_String.getCharacterLength(this.filteredValueAskingSuggestions) >= this.minimumCharacterLength)
 	{
 		var XXX_SuggestionController_instance = this;
 		
