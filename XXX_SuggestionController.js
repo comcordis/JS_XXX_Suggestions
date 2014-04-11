@@ -64,7 +64,7 @@ var XXX_SuggestionController = function (input, suggestionProvider, example, min
 	this.requestSuggestionsDelay = 80;
 	this.requestSuggestionsDelayInstance = false;
 	
-	this.minimumCharacterLength = 3;
+	this.minimumCharacterLength = 2;
 	
 	if (XXX_Type.isPositiveInteger(minimumCharacterLength))
 	{
