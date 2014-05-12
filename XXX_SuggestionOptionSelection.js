@@ -51,7 +51,7 @@ XXX_SuggestionOptionSelection.prototype.propagateDownSelectedSuggestion = functi
 XXX_SuggestionOptionSelection.prototype.suggestionOptionClicked = function (ID)
 {
 	var temp = this.IDToSuggestionOptionConversion[ID];
-			
+	
 	if (temp)
 	{
 		var index = temp.index;
@@ -64,6 +64,7 @@ XXX_SuggestionOptionSelection.prototype.suggestionOptionClicked = function (ID)
 		this.propagateDownSelectedSuggestion();
 		
 		this.resetSuggestionOptions();
+		
 		this.rerender();
 		
 		this.hide();
@@ -179,9 +180,13 @@ XXX_SuggestionOptionSelection.prototype.getSelectedSuggestionOption = function (
 {
 	var result = false;
 	
+	XXX.debug.selectedSuggestionOptionIndex = this.selectedIndex;
+	
 	if (this.selectedIndex > -1)
 	{
 		result = this.suggestionOptions[this.selectedIndex];
+		
+		XXX.debug.selectedSuggestionOption = result;
 	}
 	
 	return result;

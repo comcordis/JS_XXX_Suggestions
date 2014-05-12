@@ -27,12 +27,19 @@ var XXX_CombinedSuggestionProvider = function ()
 	
 	this.suggestionOptionsQueue = [];
 	
+	this.suggestionOptionsQueueSortingCallback = false;
+	
 	this.cancelledPreviousRequest = false;
 };
 
 XXX_CombinedSuggestionProvider.prototype.setMaximumResults = function (maximumResults)
 {
 	this.maximumResults = XXX_Default.toPositiveInteger(maximumResults, 5);
+};
+
+XXX_CombinedSuggestionProvider.prototype.setSuggestionOptionsQueueSortingCallback = function (suggestionOptionsQueueSortingCallback)
+{
+	this.suggestionOptionsQueueSortingCallback = suggestionOptionsQueueSortingCallback;
 };
 
 XXX_CombinedSuggestionProvider.prototype.requestSuggestions = function (valueAskingSuggestions, completedCallback, failedCallback)
@@ -176,32 +183,39 @@ XXX_CombinedSuggestionProvider.prototype.completedResponseHandler = function (in
 			}
 		}
 		
-		this.suggestionOptionsQueue.sort(function (a, b)
+		if (this.suggestionOptionsQueueSortingCallback)
 		{
-			var result = 0;
-			
-			if (a[0][0] == b[0][0])
+			this.suggestionOptionsQueue.sort(this.suggestionOptionsQueueSortingCallback);
+		}
+		else
+		{		
+			this.suggestionOptionsQueue.sort(function (a, b)
 			{
-				if (a[0][1] < b[0][1])
+				var result = 0;
+				
+				if (a[0][0] == b[0][0])
+				{
+					if (a[0][1] < b[0][1])
+					{
+						result = 1;
+					}
+					else if (a[0][1] > b[0][1])
+					{
+						result = -1;
+					}
+				}
+				else if (a[0][0] < b[0][0])
 				{
 					result = 1;
 				}
-				else if (a[0][1] > b[0][1])
+				else if (a[0][0] > b[0][0])
 				{
 					result = -1;
 				}
-			}
-			else if (a[0][0] < b[0][0])
-			{
-				result = 1;
-			}
-			else if (a[0][0] > b[0][0])
-			{
-				result = -1;
-			}
-			
-			return result;
-		});
+				
+				return result;
+			});
+		}
 		
 		if (this.gradualCompletion)
 		{
