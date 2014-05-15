@@ -66,6 +66,12 @@ XXX_SuggestionProvider.prototype.setSuggestionSourceToServerSideRoute = function
 	this.serverSideRoute = route;
 };
 
+XXX_SuggestionProvider.prototype.setSuggestionSourceToServerSideAPIRoute = function (route)
+{
+	this.suggestionSource = 'serverSideAPIRoute';
+	this.serverSideAPIRoute = route;
+};
+
 XXX_SuggestionProvider.prototype.setSuggestionSourceToCallback = function (requestSuggestionsCallback, cancelRequestSuggestionsCallback)
 {
 	this.suggestionSource = 'callback';
@@ -117,6 +123,7 @@ XXX_SuggestionProvider.prototype.cancelRequestSuggestions = function ()
 	switch (this.suggestionSource)
 	{
 		case 'serverSideRoute':
+		case 'serverSideAPIRoute':
 			XXX_HTTP_Browser_Request_Asynchronous.cancelRequest(this.ID + '_requestSuggestions');
 			break;
 		case 'callback':
@@ -225,12 +232,24 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 			switch (this.suggestionSource)
 			{
 				case 'serverSideRoute':					
+				case 'serverSideAPIRoute':					
 					completedCallback = function (suggestionsResponse)
 					{
 						XXX_SuggestionProvider_instance.completedResponseHandler(suggestionsResponse.valueAskingSuggestions, suggestionsResponse);
 					};
 					
-					XXX_HTTP_Browser_Request_Asynchronous.queueRequest(this.ID + '_requestSuggestions', XXX_URI.composeRouteURI(this.serverSideRoute), [{key: 'valueAskingSuggestions', value: valueAskingSuggestionsLowerCase}, {key: 'maximum', value: this.maximumResults}], completedCallback, 'json', false, 'body', false, failedCallback);
+					var uri = '';
+					
+					if (this.suggestionSource == 'serverSideRoute')
+					{
+						uri = XXX_URI.composeRouteURI(this.serverSideRoute);
+					}
+					else if (this.suggestionSource == 'serverSideAPIRoute')
+					{
+						uri = XXX_URI.composeRouteURI(this.serverSideAPIRoute, 'api', true);
+					}
+					
+					XXX_HTTP_Browser_Request_Asynchronous.queueRequest(this.ID + '_requestSuggestions', uri, [{key: 'valueAskingSuggestions', value: valueAskingSuggestionsLowerCase}, {key: 'maximum', value: this.maximumResults}], completedCallback, 'json', false, 'body', false, failedCallback);
 					break;
 				case 'callback':
 					this.requestSuggestionsCallback(valueAskingSuggestions, completedCallback, failedCallback);
