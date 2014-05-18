@@ -74,6 +74,7 @@ var XXX_SuggestionController = function (input, suggestionProvider, example, min
 	this.valueAskingSuggestions = '';
 	this.filteredValueAskingSuggestions = '';
 	this.previousCaretPosition = -1;
+	this.previousValue = '';
 	
 	this.focused = false;
 	
@@ -139,36 +140,31 @@ var XXX_SuggestionController = function (input, suggestionProvider, example, min
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'keyDown', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.keyDownHandler(nativeEvent);
-		XXX_SuggestionController_instance.updateClearVisibility();
 	});
 	
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'keyUp', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.keyUpHandler(nativeEvent);
-		XXX_SuggestionController_instance.updateClearVisibility();
 	});
 		
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'keyPress', function (nativeEvent)
 	{
 		XXX_SuggestionController_instance.keyUpHandler(nativeEvent);
-		XXX_SuggestionController_instance.updateClearVisibility();
+	});
+		
+	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'input', function (nativeEvent)
+	{
+		XXX_SuggestionController_instance.inputHandler(nativeEvent);
 	});
 		
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'blur', function (nativeEvent)
 	{
-		XXX_SuggestionController_instance.focused = false;
-		XXX_SuggestionController_instance.elements.suggestionOptionSelection.hide();
-		XXX_SuggestionController_instance.tryEnablingExample();
-		XXX_SuggestionController_instance.updateClearVisibility();
+		XXX_SuggestionController_instance.blurHandler();
 	});
 	
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'focus', function (nativeEvent)
 	{
-		XXX_SuggestionController_instance.focused = true;
-		XXX_SuggestionController_instance.elements.suggestionOptionSelection.show();
-		XXX_SuggestionController_instance.elements.suggestionOptionSelection.rerender();
-		XXX_SuggestionController_instance.tryDisablingExample();
-		XXX_SuggestionController_instance.updateClearVisibility();
+		XXX_SuggestionController_instance.focusHandler();
 	});
 	
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.clearLink, 'click', function (nativeEvent)
@@ -183,6 +179,61 @@ var XXX_SuggestionController = function (input, suggestionProvider, example, min
 	this.updateClearVisibility();
 };
 
+XXX_SuggestionController.prototype.inputHandler = function (nativeEvent)
+{
+	var value = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.input);
+		
+	// find inserted or removed characters
+	function findDelta (value, prevValue)
+	{
+		var delta = '';
+		
+		for (var i = 0; i < value.length; i++)
+		{
+			var str = value.substr(0, i) + value.substr(i + value.length - prevValue.length);
+			
+			if (str === prevValue)
+			{
+				delta = value.substr(i, value.length - prevValue.length);
+			}
+		}
+		
+		return delta;
+	}
+	
+	// get inserted chars
+	var inserted = findDelta(value, this.previousValue);
+	// get removed chars
+	var removed = findDelta(this.previousValue, value);
+	// determine if user pasted content
+	var pasted = inserted.length > 1 || (!inserted && !removed);
+	
+	if (inserted || pasted)
+	{
+		this.keyUpHandler({keyCode: 65});
+	}
+	else if (removed)
+	{
+		this.keyUpHandler({keyCode: 8});
+	}
+};
+
+XXX_SuggestionController.prototype.blurHandler = function ()
+{
+	this.focused = false;
+	this.elements.suggestionOptionSelection.hide();
+	this.tryEnablingExample();
+	this.updateClearVisibility();
+};
+
+XXX_SuggestionController.prototype.focusHandler = function ()
+{
+	this.focused = true;
+	this.elements.suggestionOptionSelection.show();
+	this.elements.suggestionOptionSelection.rerender();
+	this.tryDisablingExample();
+	this.updateClearVisibility();
+};
 
 XXX_SuggestionController.prototype.clickedClear = function ()
 {
@@ -497,6 +548,9 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 	}
 	
 	this.previousCaretPosition = caretPosition;
+	this.previousValue = value;
+	
+	this.updateClearVisibility();
 };
 
 XXX_SuggestionController.prototype.keyDownHandler = function (nativeEvent)
@@ -506,6 +560,8 @@ XXX_SuggestionController.prototype.keyDownHandler = function (nativeEvent)
 		nativeEvent.preventDefault();
 		nativeEvent.stopPropagation();
 	}
+	
+	this.updateClearVisibility();
 };
 
 XXX_SuggestionController.prototype.startRequestSuggestionsDelay = function ()
