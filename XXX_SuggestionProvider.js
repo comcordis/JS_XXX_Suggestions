@@ -239,6 +239,7 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 					};
 					
 					var uri = '';
+					var crossDomain = false;
 					
 					if (this.suggestionSource == 'serverSideRoute')
 					{
@@ -247,9 +248,10 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 					else if (this.suggestionSource == 'serverSideAPIRoute')
 					{
 						uri = XXX_URI.composeRouteURI(this.serverSideAPIRoute, 'api', true);
+						crossDomain = true;
 					}
 					
-					XXX_HTTP_Browser_Request_Asynchronous.queueRequest(this.ID + '_requestSuggestions', uri, [{key: 'valueAskingSuggestions', value: valueAskingSuggestionsLowerCase}, {key: 'maximum', value: this.maximumResults}], completedCallback, 'json', false, 'body', false, failedCallback);
+					XXX_HTTP_Browser_Request_Asynchronous.queueRequest(this.ID + '_requestSuggestions', uri, [{key: 'valueAskingSuggestions', value: valueAskingSuggestionsLowerCase}, {key: 'maximum', value: this.maximumResults}], completedCallback, 'json', false, 'uri', false, failedCallback, crossDomain);
 					break;
 				case 'callback':
 					this.requestSuggestionsCallback(valueAskingSuggestions, completedCallback, failedCallback);
