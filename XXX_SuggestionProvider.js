@@ -60,16 +60,28 @@ XXX_SuggestionProvider.prototype.disableCachedSuggestions = function ()
 	this.cachedSuggestions = [];
 };
 
-XXX_SuggestionProvider.prototype.setSuggestionSourceToServerSideRoute = function (route)
+XXX_SuggestionProvider.prototype.setSuggestionSourceToServerSideRoute = function (route, data)
 {
+	if (!XXX_Type.isArray(data))
+	{
+		data = [];
+	}
+	
 	this.suggestionSource = 'serverSideRoute';
 	this.serverSideRoute = route;
+	this.serverSideRouteData = data;
 };
 
-XXX_SuggestionProvider.prototype.setSuggestionSourceToServerSideAPIRoute = function (route)
+XXX_SuggestionProvider.prototype.setSuggestionSourceToServerSideAPIRoute = function (route, data)
 {
+	if (!XXX_Type.isArray(data))
+	{
+		data = [];
+	}
+	
 	this.suggestionSource = 'serverSideAPIRoute';
 	this.serverSideAPIRoute = route;
+	this.serverSideAPIRouteData = data;
 };
 
 XXX_SuggestionProvider.prototype.setSuggestionSourceToCallback = function (requestSuggestionsCallback, cancelRequestSuggestionsCallback)
@@ -240,18 +252,24 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 					
 					var uri = '';
 					var crossDomain = false;
+					var data = [];
 					
 					if (this.suggestionSource == 'serverSideRoute')
 					{
 						uri = XXX_URI.composeRouteURI(this.serverSideRoute);
+						data = this.serverSideRouteData;
 					}
 					else if (this.suggestionSource == 'serverSideAPIRoute')
 					{
 						uri = XXX_URI.composeRouteURI(this.serverSideAPIRoute, 'api', true);
 						crossDomain = true;
+						data = this.serverSideAPIRouteData;
 					}
 					
-					XXX_HTTP_Browser_Request_Asynchronous.queueRequest(this.ID + '_requestSuggestions', uri, [{key: 'valueAskingSuggestions', value: valueAskingSuggestionsLowerCase}, {key: 'maximum', value: this.maximumResults}], completedCallback, 'json', false, 'uri', false, failedCallback, crossDomain);
+					data.push({key: 'valueAskingSuggestions', value: valueAskingSuggestionsLowerCase});
+					data.push({key: 'maximum', value: this.maximumResults});
+					
+					XXX_HTTP_Browser_Request_Asynchronous.queueRequest(this.ID + '_requestSuggestions', uri, data, completedCallback, 'json', false, 'uri', false, failedCallback, crossDomain);
 					break;
 				case 'callback':
 					this.requestSuggestionsCallback(valueAskingSuggestions, completedCallback, failedCallback);
