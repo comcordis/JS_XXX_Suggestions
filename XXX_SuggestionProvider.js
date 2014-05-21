@@ -266,9 +266,9 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 					{
 						uri = XXX_URI.composeRouteURI(this.serverSideAPIRoute, 'api', true);
 						crossDomain = true;
-						for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(this.serverSideRouteData); i < iEnd; ++i)
+						for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(this.serverSideAPIRouteData); i < iEnd; ++i)
 						{ 
-							data.push(this.serverSideRouteData[i]);
+							data.push(this.serverSideAPIRouteData[i]);
 						}
 					}
 					
