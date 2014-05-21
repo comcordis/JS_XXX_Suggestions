@@ -257,13 +257,19 @@ XXX_SuggestionProvider.prototype.requestSuggestions = function (valueAskingSugge
 					if (this.suggestionSource == 'serverSideRoute')
 					{
 						uri = XXX_URI.composeRouteURI(this.serverSideRoute);
-						data = this.serverSideRouteData;
+						for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(this.serverSideRouteData); i < iEnd; ++i)
+						{ 
+							data.push(this.serverSideRouteData[i]);
+						}
 					}
 					else if (this.suggestionSource == 'serverSideAPIRoute')
 					{
 						uri = XXX_URI.composeRouteURI(this.serverSideAPIRoute, 'api', true);
 						crossDomain = true;
-						data = this.serverSideAPIRouteData;
+						for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(this.serverSideRouteData); i < iEnd; ++i)
+						{ 
+							data.push(this.serverSideRouteData[i]);
+						}
 					}
 					
 					data.push({key: 'valueAskingSuggestions', value: valueAskingSuggestionsLowerCase});
