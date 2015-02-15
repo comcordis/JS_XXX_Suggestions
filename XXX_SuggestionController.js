@@ -38,7 +38,7 @@ Down arrow:
 		- End of original value to complete X
 	
 Mouse over:
-	- Alleen selected index veranderen X
+	- Only change selected index X
 	
 Mouse click:
 	- Set value X
@@ -46,6 +46,12 @@ Mouse click:
 
 * Multiple spaces are filtered out as 1 space X
 * Values are trimmed at begin X
+
+Type Ahead:
+	- Show selection with complement X
+	- On blur, selection loses, should erase options if type ahead
+	- Backspace bug
+
 
 Zodra die geen suggesties meer kan vinden, pakt die de eerste suggestie van de laatste als uitgangspunt voor het resultaat
 
@@ -55,6 +61,12 @@ Als er maar 1 result is en dat is hetzelfde als het huidige, dan geen result.
 
 Last known result? Anders melding, we begrijpen uw locatie niet bla bla. X
 
+
+- onEnter press fix
+- if empty, alert
+- loading icon
+
+
 */
 	
 var XXX_SuggestionController = function (input, suggestionProvider, example, minimumCharacterLength)
@@ -63,6 +75,8 @@ var XXX_SuggestionController = function (input, suggestionProvider, example, min
 	
 	this.requestSuggestionsDelay = 80;
 	this.requestSuggestionsDelayInstance = false;
+	
+	this.openRequestTotal = 0;
 	
 	this.minimumCharacterLength = 2;
 	
@@ -75,6 +89,9 @@ var XXX_SuggestionController = function (input, suggestionProvider, example, min
 	this.filteredValueAskingSuggestions = '';
 	this.previousCaretPosition = -1;
 	this.previousValue = '';
+
+	this.typeAheadCharacterLength = 0;
+	this.appendTypeAheadOnSuggestionProviderResponse = false;
 	
 	this.focused = false;
 	
@@ -96,9 +113,13 @@ var XXX_SuggestionController = function (input, suggestionProvider, example, min
 		XXX_DOM.setInner(clearLink, '<img class="YAT_icon" src="' + XXX_URI.currentHTTPServerProtocolPrefix + XXX_URI.staticURIPathPrefix + 'YAT/presenters/images/icons/black/cross.png">');
 		
 		XXX_DOM.appendChildNode(this.elements.parent, clearLink);
+
 		
 	this.elements.clearLink = clearLink;
-	
+
+	XXX_CSS.setStyle(this.elements.clearLink, 'position', 'absolute');
+	XXX_CSS.setStyle(this.elements.clearLink, 'top', '7px');
+	XXX_CSS.setStyle(this.elements.clearLink, 'right', '3px');
 	
 	XXX_CSS.setStyle(this.elements.input, 'background-color', 'transparent');
 	
@@ -139,21 +160,25 @@ var XXX_SuggestionController = function (input, suggestionProvider, example, min
 	
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'keyDown', function (nativeEvent)
 	{
+		console.log('keyDownHandler');
 		XXX_SuggestionController_instance.keyDownHandler(nativeEvent);
 	});
 	
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'keyUp', function (nativeEvent)
 	{
+		console.log('keyUpHandler');
 		XXX_SuggestionController_instance.keyUpHandler(nativeEvent);
 	});
 		
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'keyPress', function (nativeEvent)
 	{
-		XXX_SuggestionController_instance.keyUpHandler(nativeEvent);
+		console.log('keyPressHandler');
+		//XXX_SuggestionController_instance.keyUpHandler(nativeEvent);
 	});
 		
 	XXX_DOM_NativeEventDispatcher.addEventListener(this.elements.input, 'input', function (nativeEvent)
 	{
+		console.log('inputHandler');
 		XXX_SuggestionController_instance.inputHandler(nativeEvent);
 	});
 		
@@ -220,14 +245,18 @@ XXX_SuggestionController.prototype.inputHandler = function (nativeEvent)
 
 XXX_SuggestionController.prototype.blurHandler = function ()
 {
+	console.log('blurHandler');
 	this.focused = false;
 	this.elements.suggestionOptionSelection.hide();
 	this.tryEnablingExample();
 	this.updateClearVisibility();
+	
+	this.eventDispatcher.dispatchEventToListeners('blur', this);
 };
 
 XXX_SuggestionController.prototype.focusHandler = function ()
 {
+	console.log('focusHandler');
 	this.focused = true;
 	this.elements.suggestionOptionSelection.show();
 	this.elements.suggestionOptionSelection.rerender();
@@ -254,7 +283,7 @@ XXX_SuggestionController.prototype.hideClear = function ()
 
 XXX_SuggestionController.prototype.showClear = function ()
 {
-	XXX_CSS.setStyle(this.elements.clearLink, 'display', 'inline');
+	XXX_CSS.setStyle(this.elements.clearLink, 'display', 'block');
 };
 
 XXX_SuggestionController.prototype.updateClearVisibility = function ()
@@ -271,6 +300,15 @@ XXX_SuggestionController.prototype.updateClearVisibility = function ()
 	}
 };
 
+XXX_SuggestionController.prototype.setExample = function (example)
+{
+	this.tryDisablingExample();
+
+	this.example = example;
+
+	this.tryEnablingExample();
+};
+
 XXX_SuggestionController.prototype.tryDisablingExample = function ()
 {
 	var value = XXX_DOM_NativeHelpers.nativeCharacterLineInput.getValue(this.elements.input);
@@ -279,7 +317,7 @@ XXX_SuggestionController.prototype.tryDisablingExample = function ()
 	{
 		XXX_DOM_NativeHelpers.nativeCharacterLineInput.setValue(this.elements.input, '');
 		
-		//XXX_CSS.removeClass(this.elements.input, 'XXX_TextInputExample_example');
+		XXX_CSS.removeClass(this.elements.input, 'XXX_TextInputExample_example');
 	}
 };
 
@@ -292,7 +330,7 @@ XXX_SuggestionController.prototype.tryEnablingExample = function ()
 		XXX_DOM_NativeHelpers.nativeCharacterLineInput.setValue(this.elements.input, this.example);
 		
 		this.hideClear();
-		//XXX_CSS.addClass(this.elements.input, 'XXX_TextInputExample_example');
+		XXX_CSS.addClass(this.elements.input, 'XXX_TextInputExample_example');
 	}
 };
 
@@ -335,7 +373,7 @@ XXX_SuggestionController.prototype.propagateDataFromSelectedSuggestionOption = f
 		XXX_DOM_NativeHelpers.nativeCharacterLineInput.setValue(this.elements.hiddenInputData, XXX_String_JSON.encode(selectedSuggestionOption.data));
 		
 		this.setValue(selectedSuggestionOption.suggestedValue);		
-		XXX_DOM_NativeHelpers.nativeCharacterLineInput.focus(this.elements.input);
+		//XXX_DOM_NativeHelpers.nativeCharacterLineInput.focus(this.elements.input);
 	}
 	else
 	{
@@ -499,7 +537,7 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 	{
 		nativeEvent.preventDefault();
 		nativeEvent.stopPropagation();
-	
+
 		XXX_DOM_NativeHelpers.nativeSelectionHandling.setCaretPosition(this.elements.input, valueCharacterLength);
 			
 		this.propagateDataFromSelectedSuggestionOption();
@@ -510,13 +548,19 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 	else if (XXX_Device_Keyboard.isKey(nativeEvent, 'backspace'))
 	{
 		this.resetDataFromSelectedSuggestionOption();
+
+		// Makes no sense on deletion to apply type ahead
+		this.appendTypeAheadOnSuggestionProviderResponse = false;
 		
 		requestSuggestions = true;
 	}
 	else if (XXX_Device_Keyboard.isKey(nativeEvent, 'delete'))
 	{
 		this.resetDataFromSelectedSuggestionOption();
-		
+
+		// Makes no sense on deletion to apply type ahead
+		this.appendTypeAheadOnSuggestionProviderResponse = false;
+
 		requestSuggestions = true;
 	}
 	else if
@@ -529,6 +573,8 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 	)
 	{
 		this.resetDataFromSelectedSuggestionOption();
+
+		this.appendTypeAheadOnSuggestionProviderResponse = true;
 		
 		requestSuggestions = true;
 	}
@@ -588,7 +634,7 @@ XXX_SuggestionController.prototype.cancelPreviousSuggestions = function ()
 	
 	var filteredValueAskingSuggestions = XXX_String.filterSuggestion(valueAskingSuggestions);
 	
-	// Reset type ahead
+	//this.resetTypeAhead();
 	
 	this.elements.suggestionOptionSelection.resetSuggestionOptions();
 	this.elements.suggestionOptionSelection.rerender();
@@ -621,21 +667,30 @@ XXX_SuggestionController.prototype.requestSuggestions = function ()
 			XXX_SuggestionController_instance.failedResponseHandler();
 		};
 		
+		++this.openRequestTotal;
+		
+		this.eventDispatcher.dispatchEventToListeners('loading', this);
+		
 		this.elements.suggestionProvider.requestSuggestions(this.valueAskingSuggestions, completedCallback, failedCallback);
 	}
 };
 
 XXX_SuggestionController.prototype.failedResponseHandler = function (valueAskingSuggestions)
 {
+	--this.openRequestTotal;
+	
 	// Still relevant?
 	if (this.valueAskingSuggestions == valueAskingSuggestions)
 	{
 		XXX_JS.errorNotification(1, 'Reached controller failed');
 	}
+	
 };
 
 XXX_SuggestionController.prototype.completedResponseHandler = function (valueAskingSuggestions, processedSuggestions)
-{	
+{
+	--this.openRequestTotal;
+	
 	// Still relevant?
 	if (this.valueAskingSuggestions == valueAskingSuggestions)
 	{
@@ -650,22 +705,22 @@ XXX_SuggestionController.prototype.completedResponseHandler = function (valueAsk
 		{
 			this.elements.suggestionOptionSelection.hide();
 		}
-		
-		var firstSuggestionOption = this.elements.suggestionOptionSelection.getFirstSuggestionOption();
-		
-		if (firstSuggestionOption)
-		{
-			// Correct with original valueAskingSuggestions
-			// Set type ahead
-		}
-		else
-		{
-			// Reset type ahead
-		}
 	}
 	else
 	{
 		XXX_JS.errorNotification(1, 'Received notifications not relevant to the current value asking suggestions');
+	}
+	
+	XXX_JS.errorNotification(1, 'Open request total: ' + this.openRequestTotal);
+	
+	if (this.openRequestTotal <= 0)
+	{
+		if (this.elements.suggestionOptionSelection.getSuggestionOptionTotal() == 0)
+		{
+			this.eventDispatcher.dispatchEventToListeners('noResults', this);
+		}
+		
+		this.eventDispatcher.dispatchEventToListeners('completed', this);
 	}
 };
 
@@ -677,3 +732,15 @@ XXX_SuggestionController.prototype.setValue = function (value)
 	
 	XXX_DOM_NativeHelpers.nativeSelectionHandling.setCaretPosition(this.elements.input, valueCharacterLength);
 };
+
+
+
+
+
+
+
+
+
+
+	
+

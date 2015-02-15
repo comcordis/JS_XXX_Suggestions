@@ -68,6 +68,8 @@ XXX_SuggestionOptionSelection.prototype.suggestionOptionClicked = function (ID)
 		this.rerender();
 		
 		this.hide();
+
+		this.elements.suggestionController.elements.input.blur();
 	}
 };
 
@@ -261,7 +263,7 @@ XXX_SuggestionOptionSelection.prototype.rerender = function ()
 				
 		XXX_DOM_NativeEventDispatcher.addEventListener(ID, 'mousedown', function (nativeEvent)
 		{	
-			nativeEvent.preventDefault();
+			//nativeEvent.preventDefault();
 			nativeEvent.stopPropagation();
 			
 			XXX_SuggestionOptionSelection_instance.suggestionOptionClicked(this.id);

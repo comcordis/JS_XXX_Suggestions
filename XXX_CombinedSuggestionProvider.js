@@ -97,7 +97,7 @@ XXX_CombinedSuggestionProvider.prototype.tryNextStep = function ()
 					for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(subSuggestionProvidersForStep); i < iEnd; ++i)
 					{
 						var internalIndex = [this.currentStep, i];
-						
+
 						var subSuggestionProviderFailedCallback = function (valueAskingSuggestions)
 						{
 							XXX_CombinedSuggestionProvider_instance.failedResponseHandler(internalIndex, valueAskingSuggestions);
@@ -170,7 +170,7 @@ XXX_CombinedSuggestionProvider.prototype.failedResponseHandler = function (inter
 };
 
 XXX_CombinedSuggestionProvider.prototype.completedResponseHandler = function (internalIndex, valueAskingSuggestions, suggestionOptions)
-{
+{					
 	if (valueAskingSuggestions == this.valueAskingSuggestions)
 	{	
 		++this.receivedResponsesForThisStep;
@@ -179,7 +179,24 @@ XXX_CombinedSuggestionProvider.prototype.completedResponseHandler = function (in
 		{
 			for (var i = 0, iEnd = XXX_Array.getFirstLevelItemTotal(suggestionOptions); i < iEnd; ++i)
 			{
-				this.suggestionOptionsQueue.push([internalIndex, suggestionOptions[i]]);
+				var existsAlready = false;
+				
+				for (var j = 0, jEnd = XXX_Array.getFirstLevelItemTotal(this.suggestionOptionsQueue); j < jEnd; ++j)
+				{
+					var tempInternalIndex = this.suggestionOptionsQueue[j][0];
+
+					if ((tempInternalIndex[0] == internalIndex[0] && tempInternalIndex[1] == internalIndex[1]) && this.suggestionOptionsQueue[j][1].suggestedValue == suggestionOptions[i].suggestedValue)
+					{
+						existsAlready = true;
+
+						break;
+					}
+				}
+
+				if (!existsAlready)
+				{
+					this.suggestionOptionsQueue.push([internalIndex, suggestionOptions[i]]);
+				}
 			}
 		}
 		
