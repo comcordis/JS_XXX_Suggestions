@@ -214,7 +214,7 @@ XXX_SuggestionOptionSelection.prototype.rehighlight = function ()
 
 XXX_SuggestionOptionSelection.prototype.startLoading = function ()
 {
-	if (!this.loadingInterva)
+	if (!this.loadingInterval)
 	{
 		XXX_DOM.removeChildNodes(this.elements.suggestionOptions);
 	
