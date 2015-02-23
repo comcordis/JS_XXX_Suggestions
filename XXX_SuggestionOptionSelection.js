@@ -237,6 +237,8 @@ XXX_SuggestionOptionSelection.prototype.loadingStep = function ()
 			content += '.';
 		}
 		XXX_DOM.setInner(this.elements.suggestionOptions, content);
+
+		++this.loadingStep;
 	}
 	else
 	{
@@ -321,7 +323,7 @@ XXX_SuggestionOptionSelection.prototype.show = function ()
 XXX_SuggestionOptionSelection.prototype.hide = function ()
 {
 	this.stopLoading();
-	
+
 	XXX_CSS.setStyle(this.elements.suggestionOptionsContainer, 'display', 'none');
 };
 
