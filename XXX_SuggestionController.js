@@ -583,6 +583,7 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 	{
 		this.cancelPreviousSuggestions();
 
+		this.elements.suggestionOptionSelection.show();
 		this.elements.suggestionOptionSelection.startLoading();
 		
 		if (this.requestSuggestionsDelay > 0)

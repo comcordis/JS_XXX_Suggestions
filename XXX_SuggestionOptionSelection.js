@@ -320,6 +320,8 @@ XXX_SuggestionOptionSelection.prototype.show = function ()
 
 XXX_SuggestionOptionSelection.prototype.hide = function ()
 {
+	this.stopLoading();
+	
 	XXX_CSS.setStyle(this.elements.suggestionOptionsContainer, 'display', 'none');
 };
 
