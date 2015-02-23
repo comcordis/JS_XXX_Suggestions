@@ -239,6 +239,8 @@ XXX_SuggestionOptionSelection.prototype.loadingStep = function ()
 		XXX_DOM.setInner(this.elements.suggestionOptions, content);
 
 		++this.loadingStep;
+
+		console.log('Loading step: ' + this.loadingStep)
 	}
 	else
 	{
@@ -249,6 +251,8 @@ XXX_SuggestionOptionSelection.prototype.loadingStep = function ()
 XXX_SuggestionOptionSelection.prototype.stopLoading = function ()
 {
 	XXX_Timer.stopInterval(this.loadingInterval);
+
+	this.loadingStep = 0;
 };
 
 XXX_SuggestionOptionSelection.prototype.rerender = function ()
