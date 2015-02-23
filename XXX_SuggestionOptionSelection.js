@@ -216,6 +216,8 @@ XXX_SuggestionOptionSelection.prototype.startLoading = function ()
 {
 	if (!this.loadingInterval)
 	{
+		console.log('Starting loading');
+
 		XXX_DOM.removeChildNodes(this.elements.suggestionOptions);
 	
 		var XXX_SuggestionOptionSelection_instance = this;
@@ -240,7 +242,7 @@ XXX_SuggestionOptionSelection.prototype.loadingStep = function ()
 
 		++this.loadingStep;
 
-		console.log('Loading step: ' + this.loadingStep)
+		console.log('Loading step: ' + this.loadingStep);
 	}
 	else
 	{
@@ -250,6 +252,8 @@ XXX_SuggestionOptionSelection.prototype.loadingStep = function ()
 
 XXX_SuggestionOptionSelection.prototype.stopLoading = function ()
 {
+	console.log('Stopping loading');
+	
 	XXX_Timer.stopInterval(this.loadingInterval);
 
 	this.loadingStep = 0;
