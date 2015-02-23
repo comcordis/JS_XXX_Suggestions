@@ -253,7 +253,7 @@ XXX_SuggestionOptionSelection.prototype.loadingStep = function ()
 XXX_SuggestionOptionSelection.prototype.stopLoading = function ()
 {
 	console.log('Stopping loading');
-	
+
 	XXX_Timer.stopInterval(this.loadingInterval);
 
 	this.loadingStep = 0;
@@ -330,8 +330,6 @@ XXX_SuggestionOptionSelection.prototype.show = function ()
 
 XXX_SuggestionOptionSelection.prototype.hide = function ()
 {
-	this.stopLoading();
-
 	XXX_CSS.setStyle(this.elements.suggestionOptionsContainer, 'display', 'none');
 };
 
