@@ -9,6 +9,9 @@ var XXX_SuggestionOptionSelection = function (parent, suggestionController)
 	this.mouseOver = false;
 	
 	this.IDToSuggestionOptionConversion = {};
+
+	this.loadingCounter = 0;
+	this.loadingInterval = false;
 	
 	this.elements = {};
 	
@@ -207,6 +210,43 @@ XXX_SuggestionOptionSelection.prototype.rehighlight = function ()
 		
 		XXX_CSS.setClass(tempDiv, (i == this.selectedIndex ? 'suggestionOptionSelected' : 'suggestionOption'));
 	}
+};
+
+XXX_SuggestionOptionSelection.prototype.startLoading = function ()
+{
+	if (!this.loadingInterva)
+	{
+		XXX_DOM.removeChildNodes(this.elements.suggestionOptions);
+	
+		var XXX_SuggestionOptionSelection_instance = this;
+
+		this.loadingInterval = XXX_Timer.setInterval(500, function ()
+		{
+			XXX_SuggestionOptionSelection_instance.loadingStep();
+		});
+	}
+};
+
+XXX_SuggestionOptionSelection.prototype.loadingStep = function ()
+{
+	if (this.loadingStep < 10)
+	{
+		var content = '';
+		for (var i = 0, iEnd = this.loadingStep; i < iEnd; ++i)
+		{
+			content += '.';
+		}
+		XXX_DOM.setInner(this.elements.suggestionOptions, content);
+	}
+	else
+	{
+		this.stopLoading();
+	}
+};
+
+XXX_SuggestionOptionSelection.prototype.stopLoading = function ()
+{
+	XXX_Timer.stopInterval(this.loadingInterval);
 };
 
 XXX_SuggestionOptionSelection.prototype.rerender = function ()

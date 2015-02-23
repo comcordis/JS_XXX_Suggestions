@@ -582,6 +582,8 @@ XXX_SuggestionController.prototype.keyUpHandler = function (nativeEvent)
 	if (requestSuggestions)
 	{
 		this.cancelPreviousSuggestions();
+
+		this.elements.suggestionOptionSelection.startLoading();
 		
 		if (this.requestSuggestionsDelay > 0)
 		{
@@ -616,13 +618,13 @@ XXX_SuggestionController.prototype.startRequestSuggestionsDelay = function ()
 	{
 		XXX_Timer.cancelDelay(this.requestSuggestionsDelayInstance);
 	}
-	
+
 	var XXX_SuggestionController_instance = this;
 	
 	this.requestSuggestionsDelayInstance = XXX_Timer.startDelay(this.requestSuggestionsDelay, function ()
 	{
 		XXX_SuggestionController_instance.requestSuggestions();
-	});	
+	});
 };
 
 XXX_SuggestionController.prototype.cancelPreviousSuggestions = function ()
