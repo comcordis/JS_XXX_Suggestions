@@ -220,7 +220,7 @@ XXX_SuggestionOptionSelection.prototype.startLoading = function ()
 	
 		var XXX_SuggestionOptionSelection_instance = this;
 
-		this.loadingInterval = XXX_Timer.setInterval(500, function ()
+		this.loadingInterval = XXX_Timer.startInterval(500, function ()
 		{
 			XXX_SuggestionOptionSelection_instance.loadingStep();
 		});
