@@ -1,0 +1,6 @@
+project:XXX_Suggestions_JS
+deployEnvironment:development
+checkout:master
+commitHash:37c229b3db62c174acc7c53045e22f24ad54e187
+timestamp:2015-04-13T09:46:04Z
+deployer:operations
